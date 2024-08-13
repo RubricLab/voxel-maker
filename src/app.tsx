@@ -149,6 +149,7 @@ const GridImageCreator: React.FC = () => {
           <SelectContent>
             <SelectItem value="3">3x3</SelectItem>
             <SelectItem value="4">4x4</SelectItem>
+            <SelectItem value="5">5x5</SelectItem>
             <SelectItem value="6">6x6</SelectItem>
             <SelectItem value="9">9x9</SelectItem>
           </SelectContent>
