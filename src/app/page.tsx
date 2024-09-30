@@ -3,8 +3,10 @@ import { GridImageCreator } from "./maker";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <GridImageCreator />
-    </Suspense>
+    <div className="h-screen w-screen flex items-center justify-center">
+      <Suspense fallback={<div>Loading...</div>}>
+        <GridImageCreator />
+      </Suspense>
+    </div>
   );
 }
