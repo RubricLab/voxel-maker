@@ -1,11 +1,16 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.node.json"
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"]
     }
+  },
+  "extends": "@rubriclab/config/tsconfig",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "node_modules/@dashboard/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts"
   ]
 }

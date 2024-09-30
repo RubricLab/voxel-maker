@@ -1,54 +1,59 @@
+"use client";
+import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  useQueryState,
+} from "nuqs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
+  Button,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./components/ui/select";
-import { Button } from "./components/ui/button";
-import { Switch } from "./components/ui/switch";
+  Stack,
+  Switch,
+} from "rubricui";
+import { cn } from "~/lib/utils";
 
-type Grid = boolean[];
+type Grid = Array<1 | 0>;
+
+const GRID_RESOLUTION = 99;
+const GRID_SIZES = [3, 4, 5, 6, 9] as const;
 
 const GridImageCreator: React.FC = () => {
-  const [gridSize, setGridSize] = useState<number>(4);
-  const [grid, setGrid] = useState<Grid>(Array(16).fill(false));
-  const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [showBorders, setShowBorders] = useState<boolean>(true);
+  const [gridSize, setGridSize] = useQueryState<number>(
+    "size",
+    parseAsInteger.withDefault(GRID_SIZES[0])
+  );
+
+  const [showBorders, setShowBorders] = useQueryState(
+    "borders",
+    parseAsBoolean.withDefault(true)
+  );
+
+  const [grid, setGrid] = useQueryState(
+    "grid",
+    parseAsArrayOf(parseAsInteger).withDefault(Array(16).fill(0))
+  );
+
+  const [isDrawing, setIsDrawing] = useState(false);
   const [drawMode, setDrawMode] = useState<boolean | null>(null);
+
   const lastToggledCellRef = useRef<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const size = Number(params.get("size")) || 3;
-    const gridData = params.get("grid");
-    setGridSize(size);
-    if (gridData) {
-      setGrid(gridData.split(",").map((cell) => cell === "1"));
-    } else {
-      setGrid(Array(size * size).fill(false));
-    }
-  }, []);
-
-  const updateURL = useCallback((newSize: number, newGrid: Grid): void => {
-    const params = new URLSearchParams();
-    params.set("size", newSize.toString());
-    params.set("grid", newGrid.map((cell) => (cell ? "1" : "0")).join(","));
-    window.history.replaceState(
-      {},
-      "",
-      `${window.location.pathname}?${params.toString()}`
-    );
+  const updateURL = useCallback((newGrid: Grid): void => {
+    setGrid(newGrid);
   }, []);
 
   const handleSizeChange = (newSize: string): void => {
     const size = Number(newSize);
-    const newGrid = Array(size * size).fill(false);
+    const newGrid = Array(size * size).fill(0);
     setGridSize(size);
     setGrid(newGrid);
-    updateURL(size, newGrid);
   };
 
   const handleCellChange = useCallback(
@@ -56,19 +61,20 @@ const GridImageCreator: React.FC = () => {
       if (lastToggledCellRef.current !== index) {
         setGrid((prevGrid) => {
           const newGrid = [...prevGrid];
-          newGrid[index] = drawMode ?? !newGrid[index];
-          updateURL(gridSize, newGrid);
+          newGrid[index] = drawMode
+            ? Number(drawMode)
+            : Number(!newGrid[index]);
           return newGrid;
         });
         lastToggledCellRef.current = index;
       }
     },
-    [drawMode, gridSize, updateURL]
+    [drawMode, setGrid]
   );
 
   const handlePointerDown = (index: number) => {
     setIsDrawing(true);
-    setDrawMode(grid[index] ? false : true);
+    setDrawMode(true);
     handleCellChange(index);
   };
 
@@ -95,7 +101,7 @@ const GridImageCreator: React.FC = () => {
   }, []);
 
   const generateOptimizedSVG = () => {
-    const cellSize = 100 / gridSize;
+    const cellSize = GRID_RESOLUTION / gridSize;
     const rects: string[] = [];
 
     for (let y = 0; y < gridSize; y++) {
@@ -125,9 +131,9 @@ const GridImageCreator: React.FC = () => {
       }
     }
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${rects.join(
-      ""
-    )}</svg>`;
+    const rectStr = rects.join("");
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID_RESOLUTION} ${GRID_RESOLUTION}">${rectStr}</svg>`;
   };
 
   const copyAsSVG = () => {
@@ -139,22 +145,31 @@ const GridImageCreator: React.FC = () => {
     navigator.clipboard.writeText(jsonData);
   };
 
+  const clearGrid = () => {
+    setGrid(Array(gridSize * gridSize).fill(false));
+    updateURL(Array(gridSize * gridSize).fill(false));
+  };
+
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
-      <div className="w-full">
+    <Stack gap={4}>
+      <Stack>
         <Select onValueChange={handleSizeChange} value={gridSize.toString()}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select grid size" />
+          <SelectTrigger key="trigger" className="dark:bg-white">
+            <SelectValue
+              className="dark:text-white"
+              key="size"
+              placeholder="Select grid size"
+            />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="3">3x3</SelectItem>
-            <SelectItem value="4">4x4</SelectItem>
-            <SelectItem value="5">5x5</SelectItem>
-            <SelectItem value="6">6x6</SelectItem>
-            <SelectItem value="9">9x9</SelectItem>
+            {GRID_SIZES.map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size}x{size}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center mt-4 space-x-2">
+        <div className="flex items-center space-x-2">
           <Switch
             id="show-borders"
             checked={showBorders}
@@ -162,7 +177,7 @@ const GridImageCreator: React.FC = () => {
           />
           <label htmlFor="show-borders">Show grid borders</label>
         </div>
-      </div>
+      </Stack>
       <div className="w-full md:w-[300px]">
         <div
           ref={gridRef}
@@ -175,9 +190,13 @@ const GridImageCreator: React.FC = () => {
           {grid.map((cell, index) => (
             <div
               key={index}
-              className={`cursor-pointer ${
-                showBorders ? "border border-neutral-300" : ""
-              } ${cell ? "bg-white" : "bg-neutral-200"}`}
+              className={cn(
+                "cursor-pointer",
+                cell ? "dark:bg-white bg-black" : "dark:bg-black bg-white",
+                {
+                  "border border-black dark:border-white": showBorders,
+                }
+              )}
               onPointerDown={() => handlePointerDown(index)}
               onPointerMove={() => handlePointerMove(index)}
               onPointerUp={handlePointerUp}
@@ -185,11 +204,12 @@ const GridImageCreator: React.FC = () => {
           ))}
         </div>
       </div>
-      <div className="flex gap-2 mt-4">
+      <Stack direction="horizontal" gap={1}>
         <Button onClick={copyAsSVG}>Copy as SVG</Button>
         <Button onClick={copyAsJSON}>Copy as JSON</Button>
-      </div>
-    </div>
+        <Button onClick={clearGrid}>Clear</Button>
+      </Stack>
+    </Stack>
   );
 };
 
