@@ -36,7 +36,9 @@ export const GridImageCreator: React.FC = () => {
 
   const [grid, setGrid] = useQueryState(
     "grid",
-    parseAsArrayOf(parseAsInteger).withDefault(Array(16).fill(0))
+    parseAsArrayOf(parseAsInteger).withDefault(
+      Array(GRID_SIZES[0] ** 2).fill(0)
+    )
   );
 
   const [isDrawing, setIsDrawing] = useState(false);
