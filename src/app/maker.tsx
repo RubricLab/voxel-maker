@@ -154,7 +154,7 @@ export const GridImageCreator: FC = () => {
   };
 
   const clearGrid = () => {
-    setGrid(Array(gridSize * gridSize).fill(false));
+    setGrid(Array(gridSize * gridSize).fill(0));
   };
 
   return (
