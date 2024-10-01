@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const tailwindConfig = {
-  content: ["./src/**/*.tsx", "./node_modules/rubricui/dist/**/*.js"],
+  content: ["./src/**/*.tsx", "./node_modules/@rubriclab/ui/**/*.tsx"],
   presets: [require("./rubric.preset.ts")],
 } satisfies Config;
 

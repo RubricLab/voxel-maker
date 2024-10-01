@@ -9,14 +9,12 @@ import {
   type FC,
   useMemo,
 } from "react";
-import { Button, Input, Stack, Switch } from "rubricui";
+import { Button, Input, Stack, Switch } from "@rubriclab/ui";
 import { toast } from "sonner";
 import { useDarkMode } from "~/hooks/useDarkMode";
 import { cn } from "~/lib/utils";
 
 const GRID_RESOLUTION = 99;
-const GRID_SIZES = [3, 4, 5, 6, 9] as const;
-const DEFAULT_GRID = GRID_SIZES[0];
 const GRID_VALUES = [0, 1] as const;
 
 const parseAsBooleanString = createParser({
