@@ -1,22 +1,15 @@
 "use client";
 
+import { parseAsBoolean, useQueryState, createParser } from "nuqs";
 import {
-  parseAsBoolean,
-  parseAsInteger,
-  useQueryState,
-  createParser,
-} from "nuqs";
-import { useState, useEffect, useCallback, useRef, type FC } from "react";
-import {
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Stack,
-  Switch,
-} from "rubricui";
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type FC,
+  useMemo,
+} from "react";
+import { Button, Input, Stack, Switch } from "rubricui";
 import { useDarkMode } from "~/hooks/useDarkMode";
 import { cn } from "~/lib/utils";
 
@@ -38,11 +31,6 @@ const parseAsBooleanString = createParser({
 });
 
 export const GridImageCreator: FC = () => {
-  const [gridSize, setGridSize] = useQueryState<number>(
-    "size",
-    parseAsInteger.withDefault(DEFAULT_GRID)
-  );
-
   const [showBorders, setShowBorders] = useQueryState(
     "borders",
     parseAsBoolean.withDefault(true)
@@ -53,6 +41,8 @@ export const GridImageCreator: FC = () => {
     parseAsBooleanString.withDefault(Array(DEFAULT_GRID ** 2).fill(0))
   );
 
+  const gridSize = useMemo(() => Math.sqrt(grid?.length), [grid]);
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawMode, setDrawMode] = useState<boolean | null>(null);
 
@@ -62,9 +52,8 @@ export const GridImageCreator: FC = () => {
   const gridRef = useRef<HTMLDivElement>(null);
 
   const handleSizeChange = (newSize: string): void => {
-    const size = Number(newSize);
-    const newGrid = Array(size ** 2).fill(0);
-    setGridSize(size);
+    if (!newSize || Number.isNaN(Number(newSize))) return;
+    const newGrid = Array(Number(newSize) ** 2).fill(0);
     setGrid(newGrid);
   };
 
@@ -163,33 +152,29 @@ export const GridImageCreator: FC = () => {
 
   return (
     <Stack gap={4}>
-      <Stack>
-        <Select onValueChange={handleSizeChange} value={gridSize.toString()}>
-          <SelectTrigger key="trigger" className="dark:bg-white">
-            <SelectValue
-              className="dark:text-white"
-              key="size"
-              placeholder="Select grid size"
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {GRID_SIZES.map((size) => (
-              <SelectItem key={size} value={size.toString()}>
-                {size}x{size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Stack gap={2} direction="horizontal">
-          <Switch
-            id="show-borders"
-            checked={showBorders}
-            onCheckedChange={setShowBorders}
-          />
-          <label htmlFor="show-borders">Show grid borders</label>
-        </Stack>
+      <Stack gap={2} direction="horizontal" className="w-full">
+        <label htmlFor="grid-size">Grid size</label>
+        <Input
+          type="number"
+          className="border w-1/2 dark:border-white text-black dark:text-white border-black"
+          id="grid-size"
+          value={Math.sqrt(grid.length)}
+          onChange={(e) => {
+            const val = e.target.value;
+            handleSizeChange(val);
+          }}
+        />
       </Stack>
-      <Stack className="w-full md:w-[300px]">
+      <Stack gap={2} direction="horizontal">
+        <Switch
+          id="show-borders"
+          className="border dark:border-white"
+          checked={showBorders}
+          onCheckedChange={setShowBorders}
+        />
+        <label htmlFor="show-borders">Show grid borders</label>
+      </Stack>
+      <Stack className="w-full md:w-[400px]">
         <div
           ref={gridRef}
           className={cn("grid", {
