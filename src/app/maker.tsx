@@ -1,4 +1,5 @@
 "use client";
+
 import {
   parseAsBoolean,
   parseAsInteger,
@@ -16,6 +17,7 @@ import {
   Stack,
   Switch,
 } from "rubricui";
+import { useDarkMode } from "~/hooks/useDarkMode";
 import { cn } from "~/lib/utils";
 
 const GRID_RESOLUTION = 99;
@@ -53,6 +55,8 @@ export const GridImageCreator: FC = () => {
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawMode, setDrawMode] = useState<boolean | null>(null);
+
+  const darkMode = useDarkMode();
 
   const lastToggledCellRef = useRef<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -108,7 +112,7 @@ export const GridImageCreator: FC = () => {
     return () => window.removeEventListener("pointerup", handleGlobalPointerUp);
   }, []);
 
-  const generateSVG = () => {
+  const generateSVG = useCallback(() => {
     const cellSize = GRID_RESOLUTION / gridSize;
     const rects: string[] = [];
 
@@ -131,7 +135,7 @@ export const GridImageCreator: FC = () => {
           rects.push(
             `<rect x="${startX * cellSize}" y="${y * cellSize}" width="${
               width * cellSize
-            }" height="${cellSize}" fill="white" />`
+            }" height="${cellSize}" fill="${darkMode ? "white" : "black"}" />`
           );
           startX = null;
           width = 0;
@@ -141,8 +145,8 @@ export const GridImageCreator: FC = () => {
 
     const rectStr = rects.join("");
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID_RESOLUTION} ${GRID_RESOLUTION}">${rectStr}</svg>`;
-  };
+    return `<svg xmlns="https://www.w3.org/2000/svg" viewBox="0 0 ${GRID_RESOLUTION} ${GRID_RESOLUTION}">${rectStr}</svg>`;
+  }, [gridSize, grid, darkMode]);
 
   const copyAsSVG = () => {
     navigator.clipboard.writeText(generateSVG());
