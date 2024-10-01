@@ -10,6 +10,7 @@ import {
   useMemo,
 } from "react";
 import { Button, Input, Stack, Switch } from "rubricui";
+import { toast } from "sonner";
 import { useDarkMode } from "~/hooks/useDarkMode";
 import { cn } from "~/lib/utils";
 
@@ -38,7 +39,9 @@ export const GridImageCreator: FC = () => {
 
   const [grid, setGrid] = useQueryState(
     "grid",
-    parseAsBooleanString.withDefault(Array(DEFAULT_GRID ** 2).fill(0))
+    parseAsBooleanString.withDefault(
+      "101110100".split("").map((c) => Number(c))
+    )
   );
 
   const gridSize = useMemo(() => Math.sqrt(grid?.length), [grid]);
@@ -139,15 +142,18 @@ export const GridImageCreator: FC = () => {
 
   const copyAsSVG = () => {
     navigator.clipboard.writeText(generateSVG());
+    toast.success("SVG copied to clipboard");
   };
 
   const copyAsJSON = () => {
     const jsonData = JSON.stringify({ size: gridSize, grid });
     navigator.clipboard.writeText(jsonData);
+    toast.success("JSON copied to clipboard");
   };
 
   const clearGrid = () => {
     setGrid(Array(gridSize * gridSize).fill(0));
+    toast.success("Grid cleared");
   };
 
   return (
