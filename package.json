@@ -17,7 +17,6 @@
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-switch": "^1.1.0",
     "@rubriclab/tailwind-config": "^1.0.0",
-    "@rubriclab/ui": "^5.0.3",
     "@tailwindcss/typography": "^0.5.15",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
