@@ -9,7 +9,7 @@ import {
   type FC,
   useMemo,
 } from "react";
-import { Button, Input, Stack, Switch } from "@rubriclab/ui";
+import { Button, Input, Stack, Switch } from "rubricui";
 import { toast } from "sonner";
 import { useDarkMode } from "~/hooks/useDarkMode";
 import { cn } from "~/lib/utils";

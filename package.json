@@ -1,7 +1,7 @@
 {
   "name": "maker",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "JOYBOY-0",
   "owner": "@rubriclab",
   "type": "module",
@@ -27,6 +27,7 @@
     "nuqs": "^1.19.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "rubricui": "^0.0.17",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
