@@ -58,6 +58,8 @@ export const Component = ({ grid }: { grid?: string | undefined }) => {
 }
 
 export default async function Response({ params }: ImageProps) {
+	console.log({ params })
+
 	return new ImageResponse(<Component grid={params?.grid} />, {
 		...size,
 		headers: {
