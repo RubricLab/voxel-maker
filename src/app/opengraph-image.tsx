@@ -53,6 +53,8 @@ export const Component = ({ grid = RUBRIC_BINARY }: { grid?: string | undefined 
 	)
 }
 
-export default async function Response({ params }: ImageProps) {
-	return new ImageResponse(<Component grid={params?.grid} />, size)
+export default async function Response(props: ImageProps) {
+	console.log({ props })
+
+	return new ImageResponse(<Component grid={props.params?.grid} />, size)
 }
