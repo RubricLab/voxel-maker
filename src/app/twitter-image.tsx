@@ -3,6 +3,6 @@ import OGImage, { type ImageProps } from './opengraph-image'
 export const runtime = 'edge'
 export { alt, contentType, size } from './opengraph-image'
 
-const Response = async (props: ImageProps) => OGImage(props)
-
-export default Response
+export default async function Response({ params }: ImageProps) {
+	return OGImage({ params })
+}
