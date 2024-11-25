@@ -56,5 +56,10 @@ export const Component = ({ grid = RUBRIC_BINARY }: { grid?: string | undefined 
 export default async function Response(props: ImageProps) {
 	console.log({ props })
 
-	return new ImageResponse(<Component grid={props.params?.grid} />, size)
+	return new ImageResponse(<Component grid={props.params?.grid} />, {
+		...size,
+		headers: {
+			'Cache-Control': 'public, max-age=60' // Cache for 1 minute
+		}
+	})
 }
