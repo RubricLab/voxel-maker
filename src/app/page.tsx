@@ -10,8 +10,6 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 	const searchParams = await props.searchParams
 	const { grid = RUBRIC_BINARY } = searchParams
 
-	console.log({ grid })
-
 	const title = 'Maker by Rubric'
 
 	return {

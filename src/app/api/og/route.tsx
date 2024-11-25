@@ -3,11 +3,7 @@ import { RUBRIC_BINARY } from '~/lib/constants'
 
 const size = { height: 400, width: 800 }
 
-const Component = ({ grid }: { grid?: string | null }) => {
-	console.log({ gridBefore: grid })
-	grid = grid || RUBRIC_BINARY
-	console.log({ gridAfter: grid })
-
+const Component = ({ grid }: { grid: string }) => {
 	const gridSize = Math.sqrt(grid.length)
 
 	return (
@@ -55,11 +51,7 @@ const Component = ({ grid }: { grid?: string | null }) => {
 
 export async function GET(req: Request) {
 	const { searchParams } = new URL(req.url)
-	console.log({ searchParams })
+	const grid = searchParams.get('grid') || RUBRIC_BINARY
 
-	const grid = searchParams.get('grid')
-
-	return new ImageResponse(<Component grid={grid} />, {
-		...size
-	})
+	return new ImageResponse(<Component grid={grid} />, size)
 }
