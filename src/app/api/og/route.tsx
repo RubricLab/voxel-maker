@@ -3,7 +3,7 @@ import { RUBRIC_BINARY } from '~/lib/constants'
 
 const size = { height: 400, width: 800 }
 
-export const Component = ({ grid }: { grid?: string | undefined }) => {
+const Component = ({ grid }: { grid?: string | undefined }) => {
 	console.log({ gridBefore: grid })
 	grid = grid || RUBRIC_BINARY
 	console.log({ gridAfter: grid })
