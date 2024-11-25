@@ -4,12 +4,12 @@ import { createParser, parseAsBoolean, useQueryState } from 'nuqs'
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useDarkMode } from '~/hooks/useDarkMode'
+import { RUBRIC_BINARY } from '~/lib/constants'
 import { Button } from '~/lib/ui'
 import { cn } from '~/lib/utils'
 
 const GRID_RESOLUTION = 99
 const GRID_VALUES = [0, 1] as const
-const RUBRIC_BINARY = '101110100'
 const MAX_GRID_SIZE = 24
 const OVERRIDE_THRESHOLD = 3
 
