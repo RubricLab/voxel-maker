@@ -7,8 +7,10 @@ export const contentType = 'image/png'
 export const size = { height: 400, width: 800 }
 export type ImageProps = { params: { grid?: string } }
 
-export const Component = ({ grid = RUBRIC_BINARY }: { grid?: string | undefined }) => {
-	console.log({ grid })
+export const Component = ({ grid }: { grid?: string | undefined }) => {
+	console.log({ gridBefore: grid })
+	grid = grid || RUBRIC_BINARY
+	console.log({ gridAfter: grid })
 
 	const gridSize = Math.sqrt(grid.length)
 
