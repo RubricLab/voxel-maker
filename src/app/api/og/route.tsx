@@ -57,10 +57,13 @@ export const Component = ({ grid }: { grid?: string | undefined }) => {
 	)
 }
 
-export default async function Response({ params }: ImageProps) {
-	console.log({ params })
+export async function GET(req: Request) {
+	const { searchParams } = new URL(req.url)
+	console.log({ searchParams })
 
-	return new ImageResponse(<Component grid={params?.grid} />, {
+	const grid = searchParams.get('grid')
+
+	return new ImageResponse(<Component grid={grid || ''} />, {
 		...size,
 		headers: {
 			'Cache-Control': 'public, max-age=60'
