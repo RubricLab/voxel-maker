@@ -18,13 +18,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 		title,
 		openGraph: {
 			title,
-			images: [
-				{
-					url: `/api/og?grid=${encodeURIComponent(grid)}`,
-					width: 1200,
-					height: 600
-				}
-			]
+			images: [`/api/og?grid=${encodeURIComponent(grid)}`]
 		},
 		twitter: {
 			card: 'summary_large_image',
