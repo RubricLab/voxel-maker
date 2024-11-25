@@ -1,11 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { RUBRIC_BINARY } from '~/lib/constants'
 
-export const runtime = 'edge'
-export const alt = 'Draw NxN pixel graphics.'
-export const contentType = 'image/png'
-export const size = { height: 400, width: 800 }
-export type ImageProps = { params: { grid?: string } }
+const size = { height: 400, width: 800 }
 
 export const Component = ({ grid }: { grid?: string | undefined }) => {
 	console.log({ gridBefore: grid })
