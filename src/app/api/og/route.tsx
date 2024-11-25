@@ -3,7 +3,7 @@ import { RUBRIC_BINARY } from '~/lib/constants'
 
 const size = { height: 400, width: 800 }
 
-const Component = ({ grid }: { grid?: string | undefined }) => {
+const Component = ({ grid }: { grid?: string | null }) => {
 	console.log({ gridBefore: grid })
 	grid = grid || RUBRIC_BINARY
 	console.log({ gridAfter: grid })
@@ -59,10 +59,7 @@ export async function GET(req: Request) {
 
 	const grid = searchParams.get('grid')
 
-	return new ImageResponse(<Component grid={grid || ''} />, {
-		...size,
-		headers: {
-			'Cache-Control': 'public, max-age=60'
-		}
+	return new ImageResponse(<Component grid={grid} />, {
+		...size
 	})
 }
