@@ -1,21 +1,23 @@
-import "../index.css";
-import { GeistSans } from "geist/font/sans";
-import { Toaster } from "sonner";
+import '../index.css'
+import { Toaster } from 'sonner'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 
 export const metadata = {
-  title: "Maker",
-  description: "Draw NxN pixel graphics.",
-};
+	title: 'Maker',
+	description: 'Draw NxN pixel graphics.'
+}
 
 export default function RootLayout({
-  children,
+	children
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode
 }) {
-  return (
-    <html lang="en" className={GeistSans.className}>
-      <body>{children}</body>
-      <Toaster />
-    </html>
-  );
+	return (
+		<html lang="en">
+			<NuqsAdapter>
+				<body>{children}</body>
+				<Toaster />
+			</NuqsAdapter>
+		</html>
+	)
 }

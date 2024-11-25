@@ -2,15 +2,20 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
-    }
+      "~/*": ["./src/*"]
+    },
+    "plugins": [{ "name": "next" }],
+    "module": "esnext",
+    "target": "es2017"
   },
+  "exclude": ["node_modules"],
   "extends": "@rubriclab/config/tsconfig",
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "node_modules/@dashboard/**/*.ts",
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
     ".next/types/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    "./tailwind.config.ts",
+    "node_modules/@rubriclab/ui/**/*.ts"
   ]
 }
