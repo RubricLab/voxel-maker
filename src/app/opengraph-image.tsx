@@ -8,6 +8,8 @@ export const size = { height: 400, width: 800 }
 export type ImageProps = { params: { grid?: string } }
 
 export const Component = ({ grid = RUBRIC_BINARY }: { grid?: string | undefined }) => {
+	console.log({ grid })
+
 	const gridSize = Math.sqrt(grid.length)
 
 	return (
@@ -53,13 +55,11 @@ export const Component = ({ grid = RUBRIC_BINARY }: { grid?: string | undefined 
 	)
 }
 
-export default async function Response(props: ImageProps) {
-	console.log({ props })
-
-	return new ImageResponse(<Component grid={props.params?.grid} />, {
+export default async function Response({ params }: ImageProps) {
+	return new ImageResponse(<Component grid={params?.grid} />, {
 		...size,
 		headers: {
-			'Cache-Control': 'public, max-age=60' // Cache for 1 minute
+			'Cache-Control': 'public, max-age=60'
 		}
 	})
 }
