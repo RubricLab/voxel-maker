@@ -1,8 +1,8 @@
-import React, { Suspense } from 'react'
-import { GridImageCreator } from './maker'
-import { Layout } from '~/lib/ui'
 import type { Metadata } from 'next/types'
+import { Suspense } from 'react'
 import { RUBRIC_BINARY } from '~/lib/constants'
+import { Layout } from '~/lib/ui'
+import { GridImageCreator } from './maker'
 
 type Props = { searchParams: Promise<{ grid?: string }> }
 
@@ -13,15 +13,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 	const title = 'Maker by Rubric'
 
 	return {
-		title,
 		openGraph: {
-			title,
-			images: [`/api/og?grid=${encodeURIComponent(grid)}`]
+			images: [`/api/og?grid=${encodeURIComponent(grid)}`],
+			title
 		},
+		title,
 		twitter: {
 			card: 'summary_large_image',
-			title,
-			images: [`/api/og?grid=${encodeURIComponent(grid)}`]
+			images: [`/api/og?grid=${encodeURIComponent(grid)}`],
+			title
 		}
 	}
 }

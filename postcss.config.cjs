@@ -1,1 +1,1 @@
-module.exports = require("@rubriclab/config/postcss");
+module.exports = require('@rubriclab/config/postcss')

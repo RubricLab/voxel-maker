@@ -14,13 +14,13 @@ const MAX_GRID_SIZE = 24
 const OVERRIDE_THRESHOLD = 3
 
 const parseAsBooleanString = createParser({
-	serialize: value => value.join(''),
 	parse: (queryValue: string) => {
 		const chars = queryValue.split('')
 		const valid = chars.every(char => char in GRID_VALUES)
 		if (!valid) return null
 		return chars.map(char => Number(char))
-	}
+	},
+	serialize: value => value.join('')
 })
 
 export const GridImageCreator: FC = () => {
@@ -136,7 +136,7 @@ export const GridImageCreator: FC = () => {
 	}
 
 	const copyAsJSON = () => {
-		const jsonData = JSON.stringify({ size: gridSize, grid })
+		const jsonData = JSON.stringify({ grid, size: gridSize })
 		navigator.clipboard.writeText(jsonData)
 		toast.success('JSON copied to clipboard')
 	}
@@ -177,8 +177,8 @@ export const GridImageCreator: FC = () => {
 					'border border-black dark:border-white': showBorders
 				})}
 				style={{
-					gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
-					aspectRatio: '1 / 1'
+					aspectRatio: '1 / 1',
+					gridTemplateColumns: `repeat(${gridSize}, 1fr)`
 				}}
 			>
 				{grid.map((cell, index) => (

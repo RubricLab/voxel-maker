@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 export default {
-  transpilePackages: ["@rubriclab/ui"],
-} satisfies NextConfig;
+	transpilePackages: ['@rubriclab/ui']
+} satisfies NextConfig

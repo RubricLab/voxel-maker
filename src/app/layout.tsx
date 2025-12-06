@@ -1,17 +1,13 @@
 import '../index.css'
-import { Toaster } from 'sonner'
 import { NuqsAdapter } from 'nuqs/adapters/react'
+import { Toaster } from 'sonner'
 
 export const metadata = {
-	title: 'Maker',
-	description: 'Draw NxN pixel graphics.'
+	description: 'Draw NxN pixel graphics.',
+	title: 'Maker'
 }
 
-export default function RootLayout({
-	children
-}: {
-	children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<NuqsAdapter>

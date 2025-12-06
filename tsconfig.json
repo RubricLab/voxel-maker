@@ -1,21 +1,21 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
-    "plugins": [{ "name": "next" }],
-    "module": "esnext",
-    "target": "es2017"
-  },
-  "exclude": ["node_modules"],
-  "extends": "@rubriclab/config/tsconfig",
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    ".next/types/**/*.ts",
-    "next-env.d.ts",
-    "./tailwind.config.ts",
-    "node_modules/@rubriclab/ui/**/*.ts"
-  ]
+	"compilerOptions": {
+		"baseUrl": ".",
+		"module": "esnext",
+		"paths": {
+			"~/*": ["./src/*"]
+		},
+		"plugins": [{ "name": "next" }],
+		"target": "es2017"
+	},
+	"exclude": ["node_modules"],
+	"extends": "@rubriclab/config/tsconfig",
+	"include": [
+		"./src/**/*.ts",
+		"./src/**/*.tsx",
+		".next/types/**/*.ts",
+		"next-env.d.ts",
+		"./tailwind.config.ts",
+		"node_modules/@rubriclab/ui/**/*.ts"
+	]
 }

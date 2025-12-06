@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-white dark:bg-black text-black dark:text-white;
-  }
+	body {
+		@apply bg-white dark:bg-black text-black dark:text-white;
+	}
 }
 
 @layer base {
-  :root {
-    --rubricui-primary: 252 252 252;
-    --rubricui-contrast: 5 5 5;
-  }
+	:root {
+		--rubricui-primary: 252 252 252;
+		--rubricui-contrast: 5 5 5;
+	}
 
-  .dark {
-    --rubricui-primary: 5 5 5;
-    --rubricui-contrast: 252 252 252;
-  }
+	.dark {
+		--rubricui-primary: 5 5 5;
+		--rubricui-contrast: 252 252 252;
+	}
 }

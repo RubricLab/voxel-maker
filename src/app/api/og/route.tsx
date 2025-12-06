@@ -9,24 +9,24 @@ const Component = ({ grid }: { grid: string }) => {
 	return (
 		<div
 			style={{
+				alignItems: 'center',
 				background: 'black',
 				display: 'flex',
 				flexDirection: 'column',
-				justifyContent: 'center',
-				alignItems: 'center',
 				height: '100%',
-				width: '100%',
-				overflowY: 'hidden'
+				justifyContent: 'center',
+				overflowY: 'hidden',
+				width: '100%'
 			}}
 		>
 			<div
 				style={{
+					border: '1px solid white',
 					display: 'flex',
-					flexWrap: 'wrap',
 					flexDirection: 'row',
-					width: `${size.height}px`,
+					flexWrap: 'wrap',
 					height: `${size.height}px`,
-					border: '1px solid white'
+					width: `${size.height}px`
 				}}
 			>
 				{grid
@@ -36,9 +36,9 @@ const Component = ({ grid }: { grid: string }) => {
 						<div
 							key={index}
 							style={{
-								display: 'flex',
 								background: cell ? 'white' : 'black',
 								border: '1px solid white',
+								display: 'flex',
 								height: `${100 / gridSize}%`,
 								width: `${100 / gridSize}%`
 							}}

@@ -1,1 +1,1 @@
-export const RUBRIC_BINARY = "101110100";
+export const RUBRIC_BINARY = '101110100'
