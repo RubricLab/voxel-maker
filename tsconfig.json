@@ -6,7 +6,7 @@
 			"~/*": ["./src/*"]
 		},
 		"plugins": [{ "name": "next" }],
-		"target": "es2017"
+		"target": "esnext"
 	},
 	"exclude": ["node_modules"],
 	"extends": "@rubriclab/config/tsconfig",
@@ -15,7 +15,6 @@
 		"./src/**/*.tsx",
 		".next/types/**/*.ts",
 		"next-env.d.ts",
-		"./tailwind.config.ts",
 		"node_modules/@rubriclab/ui/**/*.ts"
 	]
 }

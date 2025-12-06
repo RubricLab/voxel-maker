@@ -1,19 +1,54 @@
 @import "tailwindcss";
+@source "../node_modules/@rubriclab/ui";
 
 @layer base {
 	body {
-		@apply bg-white dark:bg-black text-black dark:text-white;
+		@apply bg-background text-foreground dark:bg-background dark:text-foreground;
 	}
 }
 
-@layer base {
-	:root {
-		--rubricui-primary: 252 252 252;
-		--rubricui-contrast: 5 5 5;
-	}
+:root {
+	--background: #fff;
+	--foreground: #000;
+	--primary: oklch(54.6% 0.245 262.881);
+	--accent: oklch(96.53% 0.004 262.56);
+	--border: oklch(86.68% 0.017 261.56);
+	--hover: oklch(92.05% 0.008 262.67);
+	--destructive: oklch(62.72% 0.233 29.22);
+	--muted: oklch(98.27% 0.001 95.47);
+	--muted-foreground: oklch(13.68% 0.034 0.09);
+	--radius: 8px;
+	/* Optional but recommended */
+	--accent-foreground: #111111;
+}
 
-	.dark {
-		--rubricui-primary: 5 5 5;
-		--rubricui-contrast: 252 252 252;
+@media (prefers-color-scheme: dark) {
+	:root {
+		--background: #000;
+		--foreground: #fff;
+		--primary: oklch(54.6% 0.245 262.881);
+		--accent: oklch(21.41% 0.007 89.49 / 60%);
+		--border: oklch(26.98% 0.009 89.63);
+		--hover: oklch(21.41% 0.007 89.49);
+		--destructive: oklch(62.72% 0.233 29.22);
+		--muted: oklch(15.48% 0.006 89.58);
+		--muted-foreground: oklch(86.68% 0.017 261.56);
+		--radius: 8px;
+		/* Optional but recommended */
+		--accent-foreground: #fafafa;
 	}
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-primary: var(--primary);
+	--color-border: var(--border);
+	--color-hover: var(--hover);
+	--color-destructive: var(--destructive);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--radius-default: var(--radius); /* Radius token for rounded utilities */
 }
