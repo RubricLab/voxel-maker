@@ -5,6 +5,9 @@ import { GridImageCreator } from './maker'
 
 type Props = { searchParams: Promise<{ grid?: string }> }
 
+const createRandomGrid = (): string =>
+	Array.from({ length: 25 }, () => (Math.random() < 0.5 ? '0' : '1')).join('')
+
 export async function generateMetadata(props: Props): Promise<Metadata> {
 	const searchParams = await props.searchParams
 	const { grid = RUBRIC_BINARY } = searchParams
@@ -27,7 +30,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function Page(props: Props) {
 	const searchParams = await props.searchParams
-	const initialGrid = searchParams.grid?.match(/^[01]+$/) ? searchParams.grid : RUBRIC_BINARY
+	const initialGrid = searchParams.grid?.match(/^[01]+$/) ? searchParams.grid : createRandomGrid()
 
 	return (
 		<Suspense fallback={<div className="maker">Loading…</div>}>
