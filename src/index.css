@@ -56,14 +56,14 @@ button {
 .maker {
 	display: grid;
 	grid-template-areas: "size editor export";
-	grid-template-columns: 126px minmax(0, 620px) minmax(300px, 1fr);
+	grid-template-columns: minmax(260px, 1fr) minmax(0, 620px) minmax(260px, 1fr);
 	align-items: start;
 	gap: 24px;
 	width: calc(100% - 48px);
-	max-width: 1160px;
+	max-width: 1240px;
 	min-height: 100svh;
 	margin: 0 auto;
-	padding: 28px 0 44px;
+	padding: max(28px, calc((100svh - 655px) / 2)) 0;
 }
 
 .editor {
@@ -161,10 +161,16 @@ button {
 
 .size-stepper {
 	display: flex;
+	width: 126px;
 	align-items: stretch;
 	flex-direction: column;
 	gap: 8px;
-	margin-top: 12px;
+	margin: 12px auto 0;
+}
+
+.size-section .section-label {
+	display: block;
+	text-align: center;
 }
 
 .size-button {
@@ -309,12 +315,18 @@ button {
 	opacity: 0.62;
 }
 
+@media (min-width: 961px) and (max-width: 1300px) {
+	.action-button kbd {
+		display: none;
+	}
+}
+
 @media (max-width: 960px) {
 	.maker {
 		display: block;
 		width: calc(100% - 28px);
 		max-width: 620px;
-		padding-top: 14px;
+		padding: 14px 0 44px;
 	}
 
 	.editor-meta {
@@ -330,10 +342,15 @@ button {
 	}
 
 	.size-stepper {
+		width: 100%;
 		align-items: center;
 		flex-direction: row;
 		justify-content: space-between;
 		gap: 17px;
+	}
+
+	.size-section .section-label {
+		text-align: left;
 	}
 
 	.size-increase,
