@@ -1,12 +1,10 @@
 'use client'
 
-import { Button, Checkbox, Container, Input, Label } from '@rubriclab/ui'
-import { createParser, parseAsBoolean, useQueryState } from 'nuqs'
+import { createParser, useQueryState } from 'nuqs'
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useDarkMode } from '~/hooks/useDarkMode'
 import { RUBRIC_BINARY } from '~/lib/constants'
-import { cn } from '~/lib/utils'
 
 const GRID_RESOLUTION = 99
 const GRID_VALUES = [0, 1] as const
@@ -23,122 +21,157 @@ const parseAsBooleanString = createParser({
 	serialize: value => value.join('')
 })
 
-export const GridImageCreator: FC = () => {
-	const [showBorders, setShowBorders] = useQueryState('borders', parseAsBoolean.withDefault(true))
+type GridImageCreatorProps = {
+	initialGrid?: string
+}
+
+export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBRIC_BINARY }) => {
 	const [grid, setGrid] = useQueryState(
 		'grid',
-		parseAsBooleanString.withDefault(RUBRIC_BINARY.split('').map(c => Number(c)))
+		parseAsBooleanString.withDefault(initialGrid.split('').map(char => Number(char)))
 	)
-
-	const [isDrawing, setIsDrawing] = useState(false)
-	const [drawMode, setDrawMode] = useState<boolean | null>(null)
+	const [transparentBackground, setTransparentBackground] = useState(true)
 	const [overrideAttempts, setOverrideAttempts] = useState(0)
 
 	const darkMode = useDarkMode()
-	const gridSize = useMemo(() => Math.sqrt(grid?.length), [grid])
-	const lastToggledCellRef = useRef<number | null>(null)
-	const gridRef = useRef<HTMLDivElement>(null)
+	const gridSize = useMemo(() => Math.sqrt(grid.length), [grid])
+	const isDrawingRef = useRef(false)
+	const drawValueRef = useRef(1)
+	const lastPaintedCellRef = useRef<number | null>(null)
+	const faviconRef = useRef<HTMLLinkElement | null>(null)
 
-	const handleSizeChange = (newSize: string): void => {
-		if (!newSize || Number.isNaN(Number(newSize))) return
-		if (Number(newSize) > MAX_GRID_SIZE) {
-			setOverrideAttempts(prev => prev + 1)
+	const handleSizeChange = (newSize: number): void => {
+		if (!Number.isInteger(newSize) || newSize < 1) return
+
+		if (newSize > MAX_GRID_SIZE) {
+			setOverrideAttempts(previous => previous + 1)
 			if (overrideAttempts < OVERRIDE_THRESHOLD) {
 				toast.error(`Grid size cannot be greater than ${MAX_GRID_SIZE}`)
 				return
 			}
 			toast.warning(`Entering crash territory: grid size ${newSize}`)
 		}
-		const newGrid = Array(Number(newSize) ** 2).fill(0)
-		setGrid(newGrid)
+
+		setGrid(Array(newSize ** 2).fill(0))
 		setOverrideAttempts(0)
 	}
 
-	const handleCellChange = useCallback(
-		(index: number): void => {
-			if (lastToggledCellRef.current !== index) {
-				setGrid(prevGrid => {
-					const newGrid = [...prevGrid]
-					newGrid[index] = drawMode ? Number(drawMode) : Number(!newGrid[index])
-					return newGrid
-				})
-				lastToggledCellRef.current = index
-			}
+	const paintCell = useCallback(
+		(index: number, value: number): void => {
+			if (lastPaintedCellRef.current === index) return
+
+			setGrid(previousGrid => {
+				if (previousGrid[index] === value) return previousGrid
+				const nextGrid = [...previousGrid]
+				nextGrid[index] = value
+				return nextGrid
+			})
+			lastPaintedCellRef.current = index
 		},
-		[drawMode, setGrid]
+		[setGrid]
 	)
 
-	const handlePointerDown = (index: number) => {
-		setIsDrawing(true)
-		setDrawMode(true)
-		handleCellChange(index)
+	const handlePointerDown = (index: number): void => {
+		const nextValue = grid[index] ? 0 : 1
+		isDrawingRef.current = true
+		drawValueRef.current = nextValue
+		paintCell(index, nextValue)
 	}
 
-	const handlePointerUp = () => {
-		setIsDrawing(false)
-		setDrawMode(null)
-		lastToggledCellRef.current = null
+	const handlePointerMove = (index: number): void => {
+		if (isDrawingRef.current) paintCell(index, drawValueRef.current)
 	}
 
-	const handlePointerMove = (index: number) => {
-		if (isDrawing) handleCellChange(index)
-	}
-
-	useEffect(() => {
-		const handleGlobalPointerUp = () => {
-			setIsDrawing(false)
-			setDrawMode(null)
-			lastToggledCellRef.current = null
-		}
-		window.addEventListener('pointerup', handleGlobalPointerUp)
-		return () => window.removeEventListener('pointerup', handleGlobalPointerUp)
+	const stopDrawing = useCallback((): void => {
+		isDrawingRef.current = false
+		lastPaintedCellRef.current = null
 	}, [])
 
-	const generateSVG = useCallback(() => {
-		const cellSize = GRID_RESOLUTION / gridSize
-		const rects: string[] = []
+	useEffect(() => {
+		window.addEventListener('pointerup', stopDrawing)
+		window.addEventListener('pointercancel', stopDrawing)
+		return () => {
+			window.removeEventListener('pointerup', stopDrawing)
+			window.removeEventListener('pointercancel', stopDrawing)
+		}
+	}, [stopDrawing])
 
-		for (let y = 0; y < gridSize; y++) {
-			let startX: number | null = null
-			let width = 0
+	const generateSVG = useCallback(
+		(includeBackground = false) => {
+			const cellSize = GRID_RESOLUTION / gridSize
+			const foreground = darkMode ? 'white' : 'black'
+			const background = darkMode ? 'black' : 'white'
+			const rects: string[] = []
 
-			for (let x = 0; x <= gridSize; x++) {
-				const index = y * gridSize + x
-				const cell = x < gridSize ? grid[index] : false
+			for (let y = 0; y < gridSize; y++) {
+				let startX: number | null = null
+				let width = 0
 
-				if (cell && startX === null) {
-					startX = x
-					width = 1
-				} else if (cell) {
-					width++
-				}
+				for (let x = 0; x <= gridSize; x++) {
+					const index = y * gridSize + x
+					const cell = x < gridSize ? grid[index] : false
 
-				if ((!cell || x === gridSize) && startX !== null) {
-					rects.push(
-						`<rect x="${startX * cellSize}" y="${y * cellSize}" width="${
-							width * cellSize
-						}" height="${cellSize}" fill="${darkMode ? 'white' : 'black'}" />`
-					)
-					startX = null
-					width = 0
+					if (cell && startX === null) {
+						startX = x
+						width = 1
+					} else if (cell) {
+						width++
+					}
+
+					if ((!cell || x === gridSize) && startX !== null) {
+						rects.push(
+							`<rect x="${startX * cellSize}" y="${y * cellSize}" width="${
+								width * cellSize
+							}" height="${cellSize}" fill="${foreground}" />`
+						)
+						startX = null
+						width = 0
+					}
 				}
 			}
+
+			const backgroundRect = includeBackground
+				? `<rect width="${GRID_RESOLUTION}" height="${GRID_RESOLUTION}" fill="${background}" />`
+				: ''
+
+			return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID_RESOLUTION} ${GRID_RESOLUTION}" shape-rendering="crispEdges">${backgroundRect}${rects.join('')}</svg>`
+		},
+		[darkMode, grid, gridSize]
+	)
+
+	useEffect(() => {
+		const existingIcon = document.querySelector<HTMLLinkElement>('link[rel~="icon"]')
+		const icon = existingIcon ?? document.createElement('link')
+		const previousHref = icon.getAttribute('href')
+
+		if (!existingIcon) {
+			icon.rel = 'icon'
+			icon.type = 'image/svg+xml'
+			document.head.appendChild(icon)
 		}
+		faviconRef.current = icon
 
-		const rectStr = rects.join('')
+		return () => {
+			faviconRef.current = null
+			if (!existingIcon) icon.remove()
+			else if (previousHref) icon.href = previousHref
+			else icon.removeAttribute('href')
+		}
+	}, [])
 
-		return `<svg xmlns="https://www.w3.org/2000/svg" viewBox="0 0 ${GRID_RESOLUTION} ${GRID_RESOLUTION}">${rectStr}</svg>`
-	}, [gridSize, grid, darkMode])
+	useEffect(() => {
+		if (!faviconRef.current) return
+		faviconRef.current.href = `data:image/svg+xml,${encodeURIComponent(generateSVG(true))}`
+	}, [generateSVG])
 
-	const copyAsSVG = () => {
-		navigator.clipboard.writeText(generateSVG())
-		toast.success('SVG copied to clipboard')
-	}
-
-	const copyAsJSON = () => {
-		const jsonData = JSON.stringify({ grid, size: gridSize })
-		navigator.clipboard.writeText(jsonData)
-		toast.success('JSON copied to clipboard')
+	const copyAsSVG = async (): Promise<void> => {
+		try {
+			await navigator.clipboard.writeText(generateSVG())
+			toast.success('SVG copied')
+		} catch (error) {
+			console.error({ error })
+			toast.error('Failed to copy SVG')
+		}
 	}
 
 	const gridToPngBlob = useCallback(
@@ -146,18 +179,25 @@ export const GridImageCreator: FC = () => {
 			const canvas = document.createElement('canvas')
 			canvas.width = size
 			canvas.height = size
-			const ctx = canvas.getContext('2d')
-			if (!ctx) throw new Error('Failed to get canvas context')
+			const context = canvas.getContext('2d')
+			if (!context) throw new Error('Failed to get canvas context')
+
+			context.imageSmoothingEnabled = false
+			const foreground = darkMode ? '#ffffff' : '#000000'
+			const background = darkMode ? '#000000' : '#ffffff'
+
+			if (!transparentBackground) {
+				context.fillStyle = background
+				context.fillRect(0, 0, size, size)
+			}
 
 			const cellSize = size / gridSize
-			const fillColor = darkMode ? '#ffffff' : '#000000'
-
+			context.fillStyle = foreground
 			for (let y = 0; y < gridSize; y++) {
 				for (let x = 0; x < gridSize; x++) {
 					const index = y * gridSize + x
 					if (grid[index]) {
-						ctx.fillStyle = fillColor
-						ctx.fillRect(
+						context.fillRect(
 							Math.floor(x * cellSize),
 							Math.floor(y * cellSize),
 							Math.ceil(cellSize),
@@ -168,44 +208,27 @@ export const GridImageCreator: FC = () => {
 			}
 
 			return new Promise((resolve, reject) => {
-				canvas.toBlob(
-					blob => {
-						if (blob) resolve(blob)
-						else reject(new Error('Failed to create PNG blob'))
-					},
-					'image/png',
-					1.0
-				)
+				canvas.toBlob(blob => {
+					if (blob) resolve(blob)
+					else reject(new Error('Failed to create PNG blob'))
+				}, 'image/png')
 			})
 		},
-		[gridSize, grid, darkMode]
+		[darkMode, grid, gridSize, transparentBackground]
 	)
 
-	const copyAsPNG = useCallback(async () => {
+	const copyAsPNG = useCallback(async (): Promise<void> => {
 		try {
 			const blob = await gridToPngBlob()
 			await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-			toast.success('PNG copied to clipboard')
+			toast.success('PNG copied')
 		} catch (error) {
 			console.error({ error })
-			toast.error('Failed to copy PNG to clipboard')
+			toast.error('Failed to copy PNG')
 		}
 	}, [gridToPngBlob])
 
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const isCopyShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c'
-			if (!isCopyShortcut) return
-			const target = e.target as HTMLElement | null
-			if (target && /^(input|textarea|select)$/i.test(target.tagName)) return
-			e.preventDefault()
-			void copyAsPNG()
-		}
-		window.addEventListener('keydown', handleKeyDown)
-		return () => window.removeEventListener('keydown', handleKeyDown)
-	}, [copyAsPNG])
-
-	const downloadAsPNG = async () => {
+	const downloadAsPNG = useCallback(async (): Promise<void> => {
 		try {
 			const blob = await gridToPngBlob()
 			const url = URL.createObjectURL(blob)
@@ -214,70 +237,139 @@ export const GridImageCreator: FC = () => {
 			link.download = `grid-${gridSize}x${gridSize}.png`
 			document.body.appendChild(link)
 			link.click()
-			document.body.removeChild(link)
+			link.remove()
 			URL.revokeObjectURL(url)
 			toast.success('PNG downloaded')
 		} catch (error) {
 			console.error({ error })
 			toast.error('Failed to download PNG')
 		}
-	}
+	}, [gridSize, gridToPngBlob])
 
-	const clearGrid = () => {
-		setGrid(Array(gridSize * gridSize).fill(0))
-		toast.success('Grid cleared')
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent): void => {
+			if (!(event.metaKey || event.ctrlKey)) return
+
+			const key = event.key.toLowerCase()
+			if (key === 's') {
+				event.preventDefault()
+				void downloadAsPNG()
+				return
+			}
+
+			if (key !== 'c') return
+			const target = event.target as HTMLElement | null
+			if (target && /^(input|textarea|select)$/i.test(target.tagName)) return
+			event.preventDefault()
+			void copyAsPNG()
+		}
+
+		window.addEventListener('keydown', handleKeyDown)
+		return () => window.removeEventListener('keydown', handleKeyDown)
+	}, [copyAsPNG, downloadAsPNG])
+
+	const clearGrid = (): void => {
+		setGrid(Array(gridSize ** 2).fill(0))
 	}
 
 	return (
-		<div className="mx-auto flex h-full w-fit flex-col items-start justify-center gap-4">
-			<Container arrangement="row" align="center" gap="sm">
-				<Label htmlFor="grid-size" className="shrink-0">
-					Grid size
-				</Label>
-				<Input
-					type="number"
-					id="grid-size"
-					value={Math.sqrt(grid.length)}
-					onChange={e => {
-						const val = e.target.value
-						handleSizeChange(val)
-					}}
-				/>
-			</Container>
-			<Container arrangement="row" align="center">
-				<Checkbox id="show-borders" value={showBorders} onChange={setShowBorders} />
-				<Label htmlFor="show-borders">Show grid borders</Label>
-			</Container>
-			<div
-				ref={gridRef}
-				className={cn('grid w-full md:w-[400px]', {
-					'border border-border': showBorders
-				})}
-				style={{
-					aspectRatio: '1 / 1',
-					gridTemplateColumns: `repeat(${gridSize}, 1fr)`
-				}}
-			>
+		<main className="maker">
+			<header className="maker-header">
+				<div>
+					<h1>Maker</h1>
+					<p>Draw pixel graphics and export PNG or SVG.</p>
+				</div>
+				<button className="clear-button" type="button" onClick={clearGrid}>
+					Clear
+				</button>
+			</header>
+
+			<section className="size-section" aria-label="Grid size">
+				<span className="section-label">Grid size</span>
+				<div className="size-stepper">
+					<button
+						className="size-button"
+						type="button"
+						onClick={() => handleSizeChange(gridSize - 1)}
+						disabled={gridSize <= 1}
+						aria-label="Make grid smaller"
+					>
+						<span aria-hidden="true">−</span>
+					</button>
+					<output className="size-value" aria-live="polite">
+						{gridSize}
+						<span>×</span>
+						{gridSize}
+					</output>
+					<button
+						className="size-button"
+						type="button"
+						onClick={() => handleSizeChange(gridSize + 1)}
+						aria-label="Make grid larger"
+					>
+						<span aria-hidden="true">+</span>
+					</button>
+				</div>
+			</section>
+
+			<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
 				{grid.map((cell, index) => (
-					<div
+					<button
 						key={index}
-						className={cn('h-full cursor-pointer', cell ? 'bg-foreground' : 'bg-background', {
-							'border border-border': showBorders
-						})}
-						onPointerDown={() => handlePointerDown(index)}
-						onPointerMove={() => handlePointerMove(index)}
-						onPointerUp={handlePointerUp}
+						className="pixel-cell"
+						data-active={cell === 1}
+						type="button"
+						aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
+						aria-pressed={cell === 1}
+						onClick={event => {
+							if (event.detail !== 0) return
+							lastPaintedCellRef.current = null
+							paintCell(index, cell ? 0 : 1)
+							lastPaintedCellRef.current = null
+						}}
+						onPointerDown={event => {
+							if (event.button !== 0) return
+							event.preventDefault()
+							handlePointerDown(index)
+						}}
+						onPointerEnter={() => handlePointerMove(index)}
 					/>
 				))}
 			</div>
-			<Container arrangement="row" gap="sm" className="flex-wrap">
-				<Button label="Copy SVG" variant="primary" onClick={copyAsSVG} />
-				<Button label="Copy PNG  ⌘C" variant="primary" onClick={copyAsPNG} />
-				<Button label="Download PNG" variant="secondary" onClick={downloadAsPNG} />
-				<Button label="Copy JSON" variant="secondary" onClick={copyAsJSON} />
-				<div className="grow" />
-				<Button label="Clear" variant="destructive" onClick={clearGrid} />
-			</Container>
-		</div>
+
+			<div className="editor-note">Click and drag to paint. Start on a filled pixel to erase.</div>
+
+			<section className="export-section" aria-labelledby="export-title">
+				<div className="export-heading">
+					<div>
+						<h2 id="export-title">Export</h2>
+						<p>PNG exports at 400 × 400.</p>
+					</div>
+					<label className="transparent-toggle" htmlFor="transparent-background">
+						<input
+							id="transparent-background"
+							type="checkbox"
+							checked={transparentBackground}
+							onChange={event => setTransparentBackground(event.target.checked)}
+						/>
+						<span>Transparent background</span>
+					</label>
+				</div>
+
+				<div className="export-actions">
+					<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
+						<span>Copy PNG</span>
+						<kbd>⌘C</kbd>
+					</button>
+					<button className="action-button primary-action" type="button" onClick={downloadAsPNG}>
+						<span>Download PNG</span>
+						<kbd>⌘S</kbd>
+					</button>
+					<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
+						Copy SVG
+					</button>
+				</div>
+			</section>
+		</main>
 	)
 }

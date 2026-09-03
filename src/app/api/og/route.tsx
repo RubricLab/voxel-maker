@@ -21,7 +21,6 @@ const Component = ({ grid }: { grid: string }) => {
 		>
 			<div
 				style={{
-					border: '1px solid white',
 					display: 'flex',
 					flexDirection: 'row',
 					flexWrap: 'wrap',
@@ -37,7 +36,6 @@ const Component = ({ grid }: { grid: string }) => {
 							key={index}
 							style={{
 								background: cell ? 'white' : 'black',
-								border: '1px solid white',
 								display: 'flex',
 								height: `${100 / gridSize}%`,
 								width: `${100 / gridSize}%`

@@ -1,4 +1,3 @@
-import { Container } from '@rubriclab/ui'
 import type { Metadata } from 'next/types'
 import { Suspense } from 'react'
 import { RUBRIC_BINARY } from '~/lib/constants'
@@ -26,14 +25,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 	}
 }
 
-export default function Page(_props: Props) {
+export default async function Page(props: Props) {
+	const searchParams = await props.searchParams
+	const initialGrid = searchParams.grid?.match(/^[01]+$/) ? searchParams.grid : RUBRIC_BINARY
+
 	return (
-		<div className="flex h-screen w-screen items-center justify-center">
-			<Suspense fallback={<div>Loading...</div>}>
-				<Container>
-					<GridImageCreator />
-				</Container>
-			</Suspense>
-		</div>
+		<Suspense fallback={<div className="maker">Loading…</div>}>
+			<GridImageCreator initialGrid={initialGrid} />
+		</Suspense>
 	)
 }
