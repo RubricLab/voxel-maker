@@ -257,101 +257,101 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 
 	return (
 		<main className="maker">
-			<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
-				{grid.map((cell, index) => (
+			<div className="editor">
+				<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+					{grid.map((cell, index) => (
+						<button
+							key={index}
+							className="pixel-cell"
+							data-active={cell === 1}
+							type="button"
+							aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
+							aria-pressed={cell === 1}
+							onClick={event => {
+								if (event.detail !== 0) return
+								lastPaintedCellRef.current = null
+								paintCell(index, cell ? 0 : 1)
+								lastPaintedCellRef.current = null
+							}}
+							onPointerDown={event => {
+								if (event.button !== 0) return
+								event.preventDefault()
+								handlePointerDown(index)
+							}}
+							onPointerEnter={() => handlePointerMove(index)}
+						/>
+					))}
+				</div>
+
+				<div className="editor-meta">
+					<span>Click and drag to paint. Start on a filled pixel to erase.</span>
+					<button className="clear-button" type="button" onClick={clearGrid}>
+						Clear
+					</button>
+				</div>
+			</div>
+
+			<section className="size-section" aria-labelledby="size-title">
+				<h2 id="size-title" className="section-label">
+					Grid size
+				</h2>
+				<div className="size-stepper">
 					<button
-						key={index}
-						className="pixel-cell"
-						data-active={cell === 1}
+						className="size-button size-decrease"
 						type="button"
-						aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
-						aria-pressed={cell === 1}
-						onClick={event => {
-							if (event.detail !== 0) return
-							lastPaintedCellRef.current = null
-							paintCell(index, cell ? 0 : 1)
-							lastPaintedCellRef.current = null
-						}}
-						onPointerDown={event => {
-							if (event.button !== 0) return
-							event.preventDefault()
-							handlePointerDown(index)
-						}}
-						onPointerEnter={() => handlePointerMove(index)}
-					/>
-				))}
-			</div>
+						onClick={() => handleSizeChange(smallerGridSize)}
+						disabled={!smallerGridSize}
+						aria-label="Make grid smaller"
+					>
+						<span aria-hidden="true">−</span>
+					</button>
+					<output className="size-value" aria-live="polite">
+						{gridSize}
+						<span>×</span>
+						{gridSize}
+					</output>
+					<button
+						className="size-button size-increase"
+						type="button"
+						onClick={() => handleSizeChange(largerGridSize)}
+						disabled={!largerGridSize}
+						aria-label="Make grid larger"
+					>
+						<span aria-hidden="true">+</span>
+					</button>
+				</div>
+			</section>
 
-			<div className="editor-meta">
-				<span>Click and drag to paint. Start on a filled pixel to erase.</span>
-				<button className="clear-button" type="button" onClick={clearGrid}>
-					Clear
-				</button>
-			</div>
-
-			<div className="controls">
-				<section className="size-section" aria-labelledby="size-title">
-					<h2 id="size-title" className="section-label">
-						Grid size
+			<section className="export-section" aria-labelledby="export-title">
+				<div className="export-heading">
+					<h2 id="export-title" className="section-label">
+						Export
 					</h2>
-					<div className="size-stepper">
-						<button
-							className="size-button size-decrease"
-							type="button"
-							onClick={() => handleSizeChange(smallerGridSize)}
-							disabled={!smallerGridSize}
-							aria-label="Make grid smaller"
-						>
-							<span aria-hidden="true">−</span>
-						</button>
-						<output className="size-value" aria-live="polite">
-							{gridSize}
-							<span>×</span>
-							{gridSize}
-						</output>
-						<button
-							className="size-button size-increase"
-							type="button"
-							onClick={() => handleSizeChange(largerGridSize)}
-							disabled={!largerGridSize}
-							aria-label="Make grid larger"
-						>
-							<span aria-hidden="true">+</span>
-						</button>
-					</div>
-				</section>
+					<label className="transparent-toggle" htmlFor="transparent-background">
+						<input
+							id="transparent-background"
+							type="checkbox"
+							checked={transparentBackground}
+							onChange={event => setTransparentBackground(event.target.checked)}
+						/>
+						<span>Transparent background</span>
+					</label>
+				</div>
 
-				<section className="export-section" aria-labelledby="export-title">
-					<div className="export-heading">
-						<h2 id="export-title" className="section-label">
-							Export
-						</h2>
-						<label className="transparent-toggle" htmlFor="transparent-background">
-							<input
-								id="transparent-background"
-								type="checkbox"
-								checked={transparentBackground}
-								onChange={event => setTransparentBackground(event.target.checked)}
-							/>
-							<span>Transparent background</span>
-						</label>
-					</div>
-
-					<div className="export-actions">
-						<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
-							<span>Copy PNG</span>
-							<kbd>⌘C</kbd>
-						</button>
-						<button className="action-button primary-action" type="button" onClick={downloadAsPNG}>
-							<span>Download</span>
-							<kbd>⌘S</kbd>
-						</button>
-						<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
-							Copy SVG
-						</button>
-					</div>
-				</section>
-			</div>
+				<div className="export-actions">
+					<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
+						<span>Copy PNG</span>
+						<kbd>⌘C</kbd>
+					</button>
+					<button className="action-button primary-action" type="button" onClick={downloadAsPNG}>
+						<span>Download</span>
+						<kbd>⌘S</kbd>
+					</button>
+					<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
+						Copy SVG
+					</button>
+				</div>
+			</section>
 		</main>
 	)
 }

@@ -54,11 +54,21 @@ button {
 }
 
 .maker {
-	width: calc(100% - 36px);
-	max-width: 620px;
+	display: grid;
+	grid-template-areas: "size editor export";
+	grid-template-columns: 126px minmax(0, 620px) minmax(300px, 1fr);
+	align-items: start;
+	gap: 24px;
+	width: calc(100% - 48px);
+	max-width: 1160px;
 	min-height: 100svh;
 	margin: 0 auto;
 	padding: 28px 0 44px;
+}
+
+.editor {
+	grid-area: editor;
+	min-width: 0;
 }
 
 .pixel-grid {
@@ -127,18 +137,19 @@ button {
 	outline-offset: 3px;
 }
 
-.controls {
-	display: grid;
-	grid-template-columns: 126px minmax(0, 1fr);
-	gap: 26px;
-	margin-top: 28px;
-}
-
 .size-section,
 .export-section {
 	min-width: 0;
 	padding-top: 13px;
 	border-top: 1px solid var(--border);
+}
+
+.size-section {
+	grid-area: size;
+}
+
+.export-section {
+	grid-area: export;
 }
 
 .section-label {
@@ -298,9 +309,11 @@ button {
 	opacity: 0.62;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 960px) {
 	.maker {
+		display: block;
 		width: calc(100% - 28px);
+		max-width: 620px;
 		padding-top: 14px;
 	}
 
@@ -308,9 +321,12 @@ button {
 		align-items: flex-start;
 	}
 
-	.controls {
-		grid-template-columns: 1fr;
-		gap: 26px;
+	.size-section {
+		margin-top: 28px;
+	}
+
+	.export-section {
+		margin-top: 26px;
 	}
 
 	.size-stepper {
