@@ -198,11 +198,29 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 
 	const copyAsSVG = async (): Promise<void> => {
 		try {
-			await navigator.clipboard.writeText(generateSVG())
+			await navigator.clipboard.writeText(generateSVG(!transparentBackground))
 			toast.success('SVG copied')
 		} catch (error) {
 			console.error({ error })
 			toast.error('Failed to copy SVG')
+		}
+	}
+
+	const downloadAsSVG = (): void => {
+		try {
+			const blob = new Blob([generateSVG(!transparentBackground)], { type: 'image/svg+xml' })
+			const url = URL.createObjectURL(blob)
+			const link = document.createElement('a')
+			link.href = url
+			link.download = `grid-${gridSize}x${gridSize}.svg`
+			document.body.appendChild(link)
+			link.click()
+			link.remove()
+			URL.revokeObjectURL(url)
+			toast.success('SVG downloaded')
+		} catch (error) {
+			console.error({ error })
+			toast.error('Failed to download SVG')
 		}
 	}
 
@@ -328,74 +346,93 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 		<main className="maker">
 			<div className="creator">
 				<div className="editor">
-					<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
-						{grid.map((cell, index) => (
-							<button
-								key={index}
-								className="pixel-cell"
-								data-active={cell === 1}
-								type="button"
-								aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
-								aria-pressed={cell === 1}
-								onClick={event => {
-									if (event.detail !== 0) return
-									lastPaintedCellRef.current = null
-									paintCell(index, cell ? 0 : 1)
-									lastPaintedCellRef.current = null
-								}}
-								onPointerDown={event => {
-									if (event.button !== 0) return
-									event.preventDefault()
-									handlePointerDown(index)
-								}}
-								onPointerEnter={() => handlePointerMove(index)}
-							/>
-						))}
+					<div className="canvas">
+						<div
+							className="axis x-axis"
+							style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
+							aria-hidden="true"
+						>
+							{Array.from({ length: gridSize }, (_, index) => (
+								<span className="axis-tick" key={index}>
+									{index}
+								</span>
+							))}
+						</div>
+						<div
+							className="axis y-axis"
+							style={{ gridTemplateRows: `repeat(${gridSize}, 1fr)` }}
+							aria-hidden="true"
+						>
+							{Array.from({ length: gridSize }, (_, index) => (
+								<span className="axis-tick" key={index}>
+									{index}
+								</span>
+							))}
+						</div>
+						<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+							{grid.map((cell, index) => (
+								<button
+									key={index}
+									className="pixel-cell"
+									data-active={cell === 1}
+									type="button"
+									aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
+									aria-pressed={cell === 1}
+									onClick={event => {
+										if (event.detail !== 0) return
+										lastPaintedCellRef.current = null
+										paintCell(index, cell ? 0 : 1)
+										lastPaintedCellRef.current = null
+									}}
+									onPointerDown={event => {
+										if (event.button !== 0) return
+										event.preventDefault()
+										handlePointerDown(index)
+									}}
+									onPointerEnter={() => handlePointerMove(index)}
+								/>
+							))}
+						</div>
 					</div>
 
-					<div className="editor-meta">
-						<span>Click and drag to paint. Start on a filled pixel to erase.</span>
-						<button className="clear-button" type="button" onClick={clearGrid}>
-							Clear
-						</button>
-					</div>
+					<div className="editor-meta">Click and drag to paint. Start on a filled pixel to erase.</div>
 				</div>
 
-				<section className="size-section" aria-labelledby="size-title">
-					<h2 id="size-title" className="section-label">
-						Grid size
-					</h2>
-					<div className="size-stepper">
-						<button
-							className="size-button size-decrease"
-							type="button"
-							onClick={() => handleSizeChange(smallerGridSize)}
-							disabled={!smallerGridSize}
-							aria-label="Make grid smaller"
-						>
-							<span aria-hidden="true">−</span>
-						</button>
-						<output className="size-value" aria-live="polite">
-							{gridSize}
-							<span>×</span>
-							{gridSize}
-						</output>
-						<button
-							className="size-button size-increase"
-							type="button"
-							onClick={() => handleSizeChange(largerGridSize)}
-							disabled={!largerGridSize}
-							aria-label="Make grid larger"
-						>
-							<span aria-hidden="true">+</span>
-						</button>
-					</div>
-				</section>
+				<div className="sidebar">
+					<section className="size-section" aria-labelledby="size-title">
+						<h2 id="size-title" className="section-label">
+							Grid size
+						</h2>
+						<div className="size-stepper">
+							<button
+								className="size-button size-decrease"
+								type="button"
+								onClick={() => handleSizeChange(smallerGridSize)}
+								disabled={!smallerGridSize}
+								aria-label="Make grid smaller"
+							>
+								<span aria-hidden="true">−</span>
+							</button>
+							<output className="size-value" aria-live="polite">
+								{gridSize}
+								<span>×</span>
+								{gridSize}
+							</output>
+							<button
+								className="size-button size-increase"
+								type="button"
+								onClick={() => handleSizeChange(largerGridSize)}
+								disabled={!largerGridSize}
+								aria-label="Make grid larger"
+							>
+								<span aria-hidden="true">+</span>
+							</button>
+						</div>
+					</section>
 
-				<section className="export-section" aria-labelledby="export-title">
-					<div className="export-heading">
-						<h2 id="export-title" className="section-label">
-							Export
+					<section className="actions-section" aria-labelledby="actions-title">
+						<h2 id="actions-title" className="section-label">
+							Actions
 						</h2>
 						<label className="transparent-toggle" htmlFor="transparent-background">
 							<input
@@ -406,30 +443,41 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 							/>
 							<span>Transparent background</span>
 						</label>
-					</div>
 
-					<div className="export-actions">
-						<button
-							className="action-button primary-action add-board-button"
-							type="button"
-							onClick={addToBoard}
-							disabled={isBlank || addingToBoard || addedGrid === serializedGrid}
-						>
-							{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
-						</button>
-						<button className="action-button secondary-action" type="button" onClick={copyAsPNG}>
-							<span>Copy PNG</span>
-							<kbd>⌘C</kbd>
-						</button>
-						<button className="action-button secondary-action" type="button" onClick={downloadAsPNG}>
-							<span>Download</span>
-							<kbd>⌘S</kbd>
-						</button>
-						<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
-							Copy SVG
-						</button>
-					</div>
-				</section>
+						<div className="export-actions">
+							<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
+								<span>Copy PNG</span>
+								<kbd>⌘C</kbd>
+							</button>
+							<button className="action-button secondary-action" type="button" onClick={downloadAsPNG}>
+								<span>Download PNG</span>
+								<kbd>⌘S</kbd>
+							</button>
+							<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
+								Copy SVG
+							</button>
+							<button className="action-button secondary-action" type="button" onClick={downloadAsSVG}>
+								Download SVG
+							</button>
+							<button
+								className="action-button secondary-action"
+								type="button"
+								onClick={addToBoard}
+								disabled={isBlank || addingToBoard || addedGrid === serializedGrid}
+							>
+								{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
+							</button>
+							<button
+								className="action-button clear-action"
+								type="button"
+								onClick={clearGrid}
+								disabled={isBlank}
+							>
+								Clear
+							</button>
+						</div>
+					</section>
+				</div>
 			</div>
 
 			<section className="board" aria-labelledby="board-title">

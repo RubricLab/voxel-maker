@@ -77,12 +77,15 @@ button {
 
 .creator {
 	display: grid;
-	grid-template-areas:
-		"size editor"
-		". export";
-	grid-template-columns: 126px minmax(0, 620px);
-	gap: 18px 24px;
+	grid-template-areas: "sidebar editor";
+	grid-template-columns: 164px minmax(0, 620px);
+	gap: 24px;
 	justify-content: center;
+	min-width: 0;
+}
+
+.sidebar {
+	grid-area: sidebar;
 	min-width: 0;
 }
 
@@ -91,8 +94,61 @@ button {
 	min-width: 0;
 }
 
+.canvas {
+	display: grid;
+	grid-template-areas:
+		"corner x-axis"
+		"y-axis grid";
+	grid-template-columns: 20px minmax(0, 1fr);
+	grid-template-rows: 17px minmax(0, 1fr);
+}
+
+.axis {
+	display: grid;
+	color: var(--control-border);
+	font-size: 8px;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	user-select: none;
+}
+
+.axis-tick {
+	position: relative;
+	display: grid;
+	place-items: center;
+}
+
+.x-axis {
+	grid-area: x-axis;
+	padding-bottom: 5px;
+}
+
+.x-axis .axis-tick::after {
+	position: absolute;
+	bottom: -5px;
+	width: 1px;
+	height: 3px;
+	background: var(--control-border);
+	content: "";
+}
+
+.y-axis {
+	grid-area: y-axis;
+	padding-right: 5px;
+}
+
+.y-axis .axis-tick::after {
+	position: absolute;
+	right: -5px;
+	width: 3px;
+	height: 1px;
+	background: var(--control-border);
+	content: "";
+}
+
 .pixel-grid {
 	display: grid;
+	grid-area: grid;
 	width: 100%;
 	aspect-ratio: 1;
 	overflow: hidden;
@@ -125,31 +181,12 @@ button {
 }
 
 .editor-meta {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
 	min-height: 35px;
+	padding-left: 20px;
 	color: var(--secondary);
 	font-size: 13px;
 }
 
-.clear-button {
-	flex-shrink: 0;
-	border: 0;
-	border-radius: 5px;
-	padding: 6px 8px;
-	background: transparent;
-	color: var(--secondary);
-	cursor: pointer;
-}
-
-.clear-button:hover {
-	background: var(--hover);
-	color: var(--danger);
-}
-
-.clear-button:focus-visible,
 .size-button:focus-visible,
 .action-button:focus-visible,
 .board-icon:focus-visible,
@@ -159,19 +196,15 @@ button {
 }
 
 .size-section,
-.export-section,
+.actions-section,
 .board {
 	min-width: 0;
 	padding-top: 13px;
 	border-top: 1px solid var(--border);
 }
 
-.size-section {
-	grid-area: size;
-}
-
-.export-section {
-	grid-area: export;
+.actions-section {
+	margin-top: 24px;
 }
 
 .section-label {
@@ -183,7 +216,7 @@ button {
 
 .size-stepper {
 	display: flex;
-	width: 126px;
+	width: 100%;
 	align-items: stretch;
 	flex-direction: column;
 	gap: 8px;
@@ -257,7 +290,6 @@ button {
 	letter-spacing: 0;
 }
 
-.export-heading,
 .board-heading {
 	display: flex;
 	min-height: 30px;
@@ -268,12 +300,13 @@ button {
 
 .transparent-toggle {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: 7px;
 	min-height: 22px;
+	margin-top: 10px;
 	color: var(--secondary);
-	font-size: 13px;
-	white-space: nowrap;
+	font-size: 12px;
+	line-height: 1.3;
 	cursor: pointer;
 }
 
@@ -286,7 +319,7 @@ button {
 
 .export-actions {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 1fr);
 	gap: 8px;
 	margin-top: 12px;
 }
@@ -332,13 +365,13 @@ button {
 	filter: brightness(0.86);
 }
 
-.secondary-action:last-child {
-	justify-content: center;
+.clear-action {
+	margin-top: 4px;
+	color: var(--danger);
 }
 
-.add-board-button {
-	grid-column: 1 / -1;
-	justify-content: center;
+.clear-action:hover:not(:disabled) {
+	border-color: var(--danger);
 }
 
 .action-button kbd {
@@ -449,16 +482,16 @@ button {
 		display: block;
 	}
 
-	.editor-meta {
-		align-items: flex-start;
-	}
-
 	.size-section {
 		margin-top: 28px;
 	}
 
-	.export-section {
+	.actions-section {
 		margin-top: 26px;
+	}
+
+	.export-actions {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.size-stepper {
