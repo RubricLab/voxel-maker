@@ -53,17 +53,37 @@ button {
 	color: inherit;
 }
 
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	clip-path: inset(50%);
+}
+
 .maker {
 	display: grid;
-	grid-template-areas: "size editor export";
-	grid-template-columns: minmax(260px, 1fr) minmax(0, 620px) minmax(260px, 1fr);
+	grid-template-columns: minmax(0, 2fr) minmax(270px, 1fr);
 	align-items: start;
-	gap: 24px;
+	gap: 38px;
 	width: calc(100% - 48px);
-	max-width: 1240px;
+	max-width: 1320px;
 	min-height: 100svh;
 	margin: 0 auto;
-	padding: max(28px, calc((100svh - 655px) / 2)) 0;
+	padding: max(28px, calc((100svh - 710px) / 2)) 0 48px;
+}
+
+.creator {
+	display: grid;
+	grid-template-areas:
+		"size editor"
+		". export";
+	grid-template-columns: 126px minmax(0, 620px);
+	gap: 18px 24px;
+	justify-content: center;
+	min-width: 0;
 }
 
 .editor {
@@ -132,13 +152,15 @@ button {
 .clear-button:focus-visible,
 .size-button:focus-visible,
 .action-button:focus-visible,
+.board-icon:focus-visible,
 .transparent-toggle:has(input:focus-visible) {
 	outline: 2px solid var(--foreground);
 	outline-offset: 3px;
 }
 
 .size-section,
-.export-section {
+.export-section,
+.board {
 	min-width: 0;
 	padding-top: 13px;
 	border-top: 1px solid var(--border);
@@ -235,7 +257,8 @@ button {
 	letter-spacing: 0;
 }
 
-.export-heading {
+.export-heading,
+.board-heading {
 	display: flex;
 	min-height: 30px;
 	align-items: flex-start;
@@ -265,7 +288,7 @@ button {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 8px;
-	margin-top: 15px;
+	margin-top: 12px;
 }
 
 .action-button {
@@ -278,18 +301,24 @@ button {
 	overflow: hidden;
 	border: 1px solid var(--control-border);
 	border-radius: 5px;
-	padding: 9px 8px;
+	padding: 9px 10px;
+	background: var(--background);
 	font-size: 13px;
 	white-space: nowrap;
 	cursor: pointer;
 }
 
-.action-button:hover {
-	filter: brightness(0.9);
+.action-button:hover:not(:disabled) {
+	background: var(--hover);
 }
 
-.action-button:active {
+.action-button:active:not(:disabled) {
 	transform: translateY(1px);
+}
+
+.action-button:disabled {
+	cursor: default;
+	opacity: 0.45;
 }
 
 .primary-action {
@@ -298,9 +327,18 @@ button {
 	color: var(--background);
 }
 
-.secondary-action {
+.primary-action:hover:not(:disabled) {
+	background: var(--foreground);
+	filter: brightness(0.86);
+}
+
+.secondary-action:last-child {
 	justify-content: center;
-	background: var(--background);
+}
+
+.add-board-button {
+	grid-column: 1 / -1;
+	justify-content: center;
 }
 
 .action-button kbd {
@@ -315,7 +353,85 @@ button {
 	opacity: 0.62;
 }
 
-@media (min-width: 961px) and (max-width: 1300px) {
+.board {
+	min-height: 120px;
+}
+
+.board-heading h2 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.board-heading span {
+	color: var(--secondary);
+	font-size: 13px;
+}
+
+.board-status {
+	margin: 14px 0 0;
+	color: var(--secondary);
+	font-size: 13px;
+}
+
+.board-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	margin-top: 14px;
+}
+
+.board-icon {
+	display: grid;
+	aspect-ratio: 1;
+	place-items: center;
+	border: 1px solid var(--border);
+	padding: 15%;
+	background: var(--background);
+	color: var(--foreground);
+	text-decoration: none;
+	transition:
+		border-color 80ms ease,
+		background 80ms ease,
+		transform 80ms ease;
+}
+
+.board-icon:hover {
+	border-color: var(--foreground);
+	background: var(--hover);
+}
+
+.board-icon:active {
+	transform: scale(0.96);
+}
+
+.board-icon svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	fill: currentColor;
+}
+
+.board-icon[data-popping="true"] {
+	animation: board-pop 520ms cubic-bezier(0.2, 1.65, 0.45, 1) both;
+}
+
+@keyframes board-pop {
+	0% {
+		opacity: 0;
+		transform: scale(0.35) rotate(-7deg);
+	}
+	62% {
+		opacity: 1;
+		transform: scale(1.08) rotate(1.5deg);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) rotate(0);
+	}
+}
+
+@media (min-width: 961px) and (max-width: 1160px) {
 	.action-button kbd {
 		display: none;
 	}
@@ -327,6 +443,10 @@ button {
 		width: calc(100% - 28px);
 		max-width: 620px;
 		padding: 14px 0 44px;
+	}
+
+	.creator {
+		display: block;
 	}
 
 	.editor-meta {
@@ -369,18 +489,35 @@ button {
 		min-height: 48px;
 		font-size: clamp(38px, 12vw, 52px);
 	}
+
+	.board {
+		margin-top: 48px;
+	}
 }
 
-@media (max-width: 360px) {
+@media (max-width: 420px) {
 	.action-button {
-		padding-right: 6px;
-		padding-left: 6px;
+		padding-right: 7px;
+		padding-left: 7px;
 		font-size: 12px;
+	}
+
+	.action-button kbd {
+		display: none;
+	}
+
+	.board-grid {
+		gap: 8px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.size-button {
+	.size-button,
+	.board-icon {
 		transition: none;
+	}
+
+	.board-icon[data-popping="true"] {
+		animation: none;
 	}
 }

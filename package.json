@@ -31,7 +31,8 @@
 		"dev": "next dev",
 		"format": "bunx biome format --write .",
 		"lint": "bunx biome check .",
-		"lint:fix": "bunx biome check . --fix --unsafe"
+		"lint:fix": "bunx biome check . --fix --unsafe",
+		"start": "next start --hostname 127.0.0.1"
 	},
 	"type": "module",
 	"version": "0.0.4"

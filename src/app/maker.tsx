@@ -4,25 +4,40 @@ import { createParser, useQueryState } from 'nuqs'
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useDarkMode } from '~/hooks/useDarkMode'
-import { RUBRIC_BINARY } from '~/lib/constants'
+import { GRID_SIZES, RUBRIC_BINARY } from '~/lib/constants'
 
 const GRID_RESOLUTION = 99
-const GRID_VALUES = [0, 1] as const
-const GRID_SIZES = [3, 5, 7, 9, 12, 15, 18, 21, 30]
 const PNG_TARGET_SIZE = 400
+
+type BoardCreation = {
+	createdAt: string
+	grid: string
+	id: number
+}
+
+type GridImageCreatorProps = {
+	initialGrid?: string
+}
 
 const parseAsBooleanString = createParser({
 	parse: (queryValue: string) => {
-		const chars = queryValue.split('')
-		const valid = chars.every(char => char in GRID_VALUES)
-		if (!valid) return null
-		return chars.map(char => Number(char))
+		if (!/^[01]+$/.test(queryValue)) return null
+		const size = Math.sqrt(queryValue.length)
+		if (!GRID_SIZES.some(gridSize => gridSize === size)) return null
+		return queryValue.split('').map(char => Number(char))
 	},
 	serialize: value => value.join('')
 })
 
-type GridImageCreatorProps = {
-	initialGrid?: string
+const createGridPath = (grid: string): string => {
+	const size = Math.sqrt(grid.length)
+	let path = ''
+	for (let y = 0; y < size; y++) {
+		for (let x = 0; x < size; x++) {
+			if (grid[y * size + x] === '1') path += `M${x} ${y}h1v1H${x}z`
+		}
+	}
+	return path
 }
 
 export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBRIC_BINARY }) => {
@@ -31,15 +46,42 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 		parseAsBooleanString.withDefault(initialGrid.split('').map(char => Number(char)))
 	)
 	const [transparentBackground, setTransparentBackground] = useState(true)
+	const [board, setBoard] = useState<BoardCreation[]>([])
+	const [boardLoading, setBoardLoading] = useState(true)
+	const [addingToBoard, setAddingToBoard] = useState(false)
+	const [addedGrid, setAddedGrid] = useState<string | null>(null)
+	const [poppingCreation, setPoppingCreation] = useState({ id: 0, nonce: 0 })
 
 	const darkMode = useDarkMode()
 	const gridSize = useMemo(() => Math.sqrt(grid.length), [grid])
+	const serializedGrid = useMemo(() => grid.join(''), [grid])
 	const smallerGridSize = [...GRID_SIZES].reverse().find(size => size < gridSize)
 	const largerGridSize = GRID_SIZES.find(size => size > gridSize)
+	const isBlank = !grid.some(Boolean)
 	const isDrawingRef = useRef(false)
 	const drawValueRef = useRef(1)
 	const lastPaintedCellRef = useRef<number | null>(null)
 	const faviconRef = useRef<HTMLLinkElement | null>(null)
+
+	useEffect(() => {
+		let cancelled = false
+		const loadBoard = async (): Promise<void> => {
+			try {
+				const response = await fetch('/api/board', { cache: 'no-store' })
+				if (!response.ok) throw new Error('Failed to load board')
+				const payload = (await response.json()) as { creations: BoardCreation[] }
+				if (!cancelled) setBoard(payload.creations)
+			} catch (error) {
+				console.error({ error })
+			} finally {
+				if (!cancelled) setBoardLoading(false)
+			}
+		}
+		void loadBoard()
+		return () => {
+			cancelled = true
+		}
+	}, [])
 
 	const handleSizeChange = (newSize: number | undefined): void => {
 		if (!newSize) return
@@ -186,9 +228,7 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 		for (let y = 0; y < gridSize; y++) {
 			for (let x = 0; x < gridSize; x++) {
 				const index = y * gridSize + x
-				if (grid[index]) {
-					context.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
-				}
+				if (grid[index]) context.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
 			}
 		}
 
@@ -229,6 +269,35 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 		}
 	}, [gridSize, gridToPngBlob])
 
+	const addToBoard = async (): Promise<void> => {
+		if (isBlank || addingToBoard) return
+		setAddingToBoard(true)
+		try {
+			const response = await fetch('/api/board', {
+				body: JSON.stringify({ grid: serializedGrid }),
+				headers: { 'Content-Type': 'application/json' },
+				method: 'POST'
+			})
+			const payload = (await response.json()) as {
+				created?: boolean
+				creation?: BoardCreation
+				error?: string
+			}
+			if (!response.ok || !payload.creation) throw new Error(payload.error || 'Failed to add creation')
+
+			const creation = payload.creation
+			setBoard(previous => [creation, ...previous.filter(item => item.id !== creation.id)])
+			setAddedGrid(serializedGrid)
+			setPoppingCreation(previous => ({ id: creation.id, nonce: previous.nonce + 1 }))
+			toast.success(payload.created ? 'Added to board' : 'Already on the board')
+		} catch (error) {
+			console.error({ error })
+			toast.error(error instanceof Error ? error.message : 'Failed to add creation')
+		} finally {
+			setAddingToBoard(false)
+		}
+	}
+
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent): void => {
 			if (!(event.metaKey || event.ctrlKey)) return
@@ -257,99 +326,142 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 
 	return (
 		<main className="maker">
-			<div className="editor">
-				<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
-					{grid.map((cell, index) => (
-						<button
-							key={index}
-							className="pixel-cell"
-							data-active={cell === 1}
-							type="button"
-							aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
-							aria-pressed={cell === 1}
-							onClick={event => {
-								if (event.detail !== 0) return
-								lastPaintedCellRef.current = null
-								paintCell(index, cell ? 0 : 1)
-								lastPaintedCellRef.current = null
-							}}
-							onPointerDown={event => {
-								if (event.button !== 0) return
-								event.preventDefault()
-								handlePointerDown(index)
-							}}
-							onPointerEnter={() => handlePointerMove(index)}
-						/>
-					))}
+			<div className="creator">
+				<div className="editor">
+					<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+						{grid.map((cell, index) => (
+							<button
+								key={index}
+								className="pixel-cell"
+								data-active={cell === 1}
+								type="button"
+								aria-label={`${cell ? 'Erase' : 'Fill'} row ${Math.floor(index / gridSize) + 1}, column ${(index % gridSize) + 1}`}
+								aria-pressed={cell === 1}
+								onClick={event => {
+									if (event.detail !== 0) return
+									lastPaintedCellRef.current = null
+									paintCell(index, cell ? 0 : 1)
+									lastPaintedCellRef.current = null
+								}}
+								onPointerDown={event => {
+									if (event.button !== 0) return
+									event.preventDefault()
+									handlePointerDown(index)
+								}}
+								onPointerEnter={() => handlePointerMove(index)}
+							/>
+						))}
+					</div>
+
+					<div className="editor-meta">
+						<span>Click and drag to paint. Start on a filled pixel to erase.</span>
+						<button className="clear-button" type="button" onClick={clearGrid}>
+							Clear
+						</button>
+					</div>
 				</div>
 
-				<div className="editor-meta">
-					<span>Click and drag to paint. Start on a filled pixel to erase.</span>
-					<button className="clear-button" type="button" onClick={clearGrid}>
-						Clear
-					</button>
-				</div>
+				<section className="size-section" aria-labelledby="size-title">
+					<h2 id="size-title" className="section-label">
+						Grid size
+					</h2>
+					<div className="size-stepper">
+						<button
+							className="size-button size-decrease"
+							type="button"
+							onClick={() => handleSizeChange(smallerGridSize)}
+							disabled={!smallerGridSize}
+							aria-label="Make grid smaller"
+						>
+							<span aria-hidden="true">−</span>
+						</button>
+						<output className="size-value" aria-live="polite">
+							{gridSize}
+							<span>×</span>
+							{gridSize}
+						</output>
+						<button
+							className="size-button size-increase"
+							type="button"
+							onClick={() => handleSizeChange(largerGridSize)}
+							disabled={!largerGridSize}
+							aria-label="Make grid larger"
+						>
+							<span aria-hidden="true">+</span>
+						</button>
+					</div>
+				</section>
+
+				<section className="export-section" aria-labelledby="export-title">
+					<div className="export-heading">
+						<h2 id="export-title" className="section-label">
+							Export
+						</h2>
+						<label className="transparent-toggle" htmlFor="transparent-background">
+							<input
+								id="transparent-background"
+								type="checkbox"
+								checked={transparentBackground}
+								onChange={event => setTransparentBackground(event.target.checked)}
+							/>
+							<span>Transparent background</span>
+						</label>
+					</div>
+
+					<div className="export-actions">
+						<button
+							className="action-button primary-action add-board-button"
+							type="button"
+							onClick={addToBoard}
+							disabled={isBlank || addingToBoard || addedGrid === serializedGrid}
+						>
+							{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
+						</button>
+						<button className="action-button secondary-action" type="button" onClick={copyAsPNG}>
+							<span>Copy PNG</span>
+							<kbd>⌘C</kbd>
+						</button>
+						<button className="action-button secondary-action" type="button" onClick={downloadAsPNG}>
+							<span>Download</span>
+							<kbd>⌘S</kbd>
+						</button>
+						<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
+							Copy SVG
+						</button>
+					</div>
+				</section>
 			</div>
 
-			<section className="size-section" aria-labelledby="size-title">
-				<h2 id="size-title" className="section-label">
-					Grid size
-				</h2>
-				<div className="size-stepper">
-					<button
-						className="size-button size-decrease"
-						type="button"
-						onClick={() => handleSizeChange(smallerGridSize)}
-						disabled={!smallerGridSize}
-						aria-label="Make grid smaller"
-					>
-						<span aria-hidden="true">−</span>
-					</button>
-					<output className="size-value" aria-live="polite">
-						{gridSize}
-						<span>×</span>
-						{gridSize}
-					</output>
-					<button
-						className="size-button size-increase"
-						type="button"
-						onClick={() => handleSizeChange(largerGridSize)}
-						disabled={!largerGridSize}
-						aria-label="Make grid larger"
-					>
-						<span aria-hidden="true">+</span>
-					</button>
+			<section className="board" aria-labelledby="board-title">
+				<div className="board-heading">
+					<h2 id="board-title">Board</h2>
+					<span>Made here</span>
 				</div>
-			</section>
-
-			<section className="export-section" aria-labelledby="export-title">
-				<div className="export-heading">
-					<h2 id="export-title" className="section-label">
-						Export
-					</h2>
-					<label className="transparent-toggle" htmlFor="transparent-background">
-						<input
-							id="transparent-background"
-							type="checkbox"
-							checked={transparentBackground}
-							onChange={event => setTransparentBackground(event.target.checked)}
-						/>
-						<span>Transparent background</span>
-					</label>
-				</div>
-
-				<div className="export-actions">
-					<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
-						<span>Copy PNG</span>
-						<kbd>⌘C</kbd>
-					</button>
-					<button className="action-button primary-action" type="button" onClick={downloadAsPNG}>
-						<span>Download</span>
-						<kbd>⌘S</kbd>
-					</button>
-					<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
-						Copy SVG
-					</button>
+				{boardLoading ? <p className="board-status">Loading…</p> : null}
+				{!boardLoading && board.length === 0 ? (
+					<p className="board-status">Nothing here yet. Add the first one.</p>
+				) : null}
+				<div className="board-grid">
+					{board.map(creation => {
+						const size = Math.sqrt(creation.grid.length)
+						const isPopping = poppingCreation.id === creation.id
+						return (
+							<a
+								key={isPopping ? `${creation.id}-${poppingCreation.nonce}` : creation.id}
+								className="board-icon"
+								data-popping={isPopping}
+								href={`/?grid=${creation.grid}`}
+								title={`${size}×${size}`}
+							>
+								<svg viewBox={`0 0 ${size} ${size}`} aria-hidden="true" shapeRendering="crispEdges">
+									<path d={createGridPath(creation.grid)} />
+								</svg>
+								<span className="sr-only">
+									Open {size} by {size} creation
+								</span>
+							</a>
+						)
+					})}
 				</div>
 			</section>
 		</main>
