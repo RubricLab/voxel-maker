@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 
 export const metadata = {
 	description: 'Draw NxN pixel graphics.',
+	metadataBase: new URL('https://maker.rubric.sh'),
 	title: 'Maker'
 }
 
