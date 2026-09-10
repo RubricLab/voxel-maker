@@ -403,6 +403,17 @@ button {
 	border-color: var(--danger);
 }
 
+.action-label {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 7px;
+}
+
+.action-label svg {
+	flex-shrink: 0;
+}
+
 .action-button kbd {
 	flex-shrink: 0;
 	border: 0;

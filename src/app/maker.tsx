@@ -1,5 +1,6 @@
 'use client'
 
+import { ClipboardCopyIcon, DownloadIcon } from '@radix-ui/react-icons'
 import { createParser, useQueryState } from 'nuqs'
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -438,18 +439,30 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 
 						<div className="export-actions">
 							<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
-								<span>Copy PNG</span>
+								<span className="action-label">
+									<ClipboardCopyIcon aria-hidden="true" />
+									Copy PNG
+								</span>
 								<kbd>⌘C</kbd>
 							</button>
 							<button className="action-button secondary-action" type="button" onClick={downloadAsPNG}>
-								<span>Download PNG</span>
+								<span className="action-label">
+									<DownloadIcon aria-hidden="true" />
+									Download PNG
+								</span>
 								<kbd>⌘S</kbd>
 							</button>
 							<button className="action-button secondary-action" type="button" onClick={copyAsSVG}>
-								Copy SVG
+								<span className="action-label">
+									<ClipboardCopyIcon aria-hidden="true" />
+									Copy SVG
+								</span>
 							</button>
 							<button className="action-button secondary-action" type="button" onClick={downloadAsSVG}>
-								Download SVG
+								<span className="action-label">
+									<DownloadIcon aria-hidden="true" />
+									Download SVG
+								</span>
 							</button>
 							<button
 								className="action-button secondary-action"
