@@ -397,9 +397,7 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 							Click and drag to paint. Start on a filled pixel to erase.
 						</span>
 						<label className="background-toggle">
-							<span>
-								{transparentBackground ? 'Transparent' : darkMode ? 'Black background' : 'White background'}
-							</span>
+							<span>Transparent</span>
 							<input
 								type="checkbox"
 								checked={transparentBackground}
