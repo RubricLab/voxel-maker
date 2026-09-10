@@ -362,7 +362,11 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 								</span>
 							))}
 						</div>
-						<div className="pixel-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+						<div
+							className="pixel-grid"
+							data-transparent={transparentBackground}
+							style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
+						>
 							{grid.map((cell, index) => (
 								<button
 									key={index}
@@ -388,7 +392,22 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 						</div>
 					</div>
 
-					<div className="editor-meta">Click and drag to paint. Start on a filled pixel to erase.</div>
+					<div className="editor-meta">
+						<span className="editor-help">
+							Click and drag to paint. Start on a filled pixel to erase.
+						</span>
+						<label className="background-toggle">
+							<span>
+								{transparentBackground ? 'Transparent' : darkMode ? 'Black background' : 'White background'}
+							</span>
+							<input
+								type="checkbox"
+								checked={transparentBackground}
+								onChange={event => setTransparentBackground(event.target.checked)}
+							/>
+							<span className="switch-track" aria-hidden="true" />
+						</label>
+					</div>
 				</div>
 
 				<div className="sidebar">
@@ -427,15 +446,6 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 						<h2 id="actions-title" className="section-label">
 							Actions
 						</h2>
-						<label className="transparent-toggle" htmlFor="transparent-background">
-							<input
-								id="transparent-background"
-								type="checkbox"
-								checked={transparentBackground}
-								onChange={event => setTransparentBackground(event.target.checked)}
-							/>
-							<span>Transparent background</span>
-						</label>
 
 						<div className="export-actions">
 							<button className="action-button primary-action" type="button" onClick={copyAsPNG}>
