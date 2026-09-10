@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardCopyIcon, DownloadIcon } from '@radix-ui/react-icons'
+import { ArrowRightIcon, ClipboardCopyIcon, DownloadIcon } from '@radix-ui/react-icons'
 import { createParser, useQueryState } from 'nuqs'
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -346,6 +346,18 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 	return (
 		<main className="maker">
 			<div className="creator">
+				<button
+					className="action-button secondary-action desktop-board-action"
+					type="button"
+					onClick={addToBoard}
+					disabled={isBlank || addingToBoard || addedGrid === serializedGrid}
+				>
+					<span>
+						{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
+					</span>
+					<ArrowRightIcon aria-hidden="true" />
+				</button>
+
 				<div className="editor">
 					<div className="canvas">
 						<div className="axis x-axis" aria-hidden="true">
@@ -473,12 +485,15 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 								</span>
 							</button>
 							<button
-								className="action-button secondary-action"
+								className="action-button secondary-action mobile-board-action"
 								type="button"
 								onClick={addToBoard}
 								disabled={isBlank || addingToBoard || addedGrid === serializedGrid}
 							>
-								{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
+								<span>
+									{addingToBoard ? 'Adding…' : addedGrid === serializedGrid ? 'On board' : 'Add to board'}
+								</span>
+								<ArrowRightIcon aria-hidden="true" />
 							</button>
 							<button
 								className="action-button clear-action"
