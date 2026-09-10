@@ -221,12 +221,15 @@ button {
 	outline-offset: 3px;
 }
 
-.size-section,
-.actions-section,
-.board {
+.size-section {
 	min-width: 0;
 	padding-top: 13px;
 	border-top: 1px solid var(--border);
+}
+
+.actions-section,
+.board {
+	min-width: 0;
 }
 
 .actions-section {
@@ -514,6 +517,8 @@ button {
 
 	.actions-section {
 		margin-top: 26px;
+		padding-top: 13px;
+		border-top: 1px solid var(--border);
 	}
 
 	.export-actions {
@@ -551,6 +556,8 @@ button {
 
 	.board {
 		margin-top: 48px;
+		padding-top: 13px;
+		border-top: 1px solid var(--border);
 	}
 }
 
