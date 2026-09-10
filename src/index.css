@@ -104,7 +104,7 @@ button {
 }
 
 .axis {
-	display: grid;
+	display: flex;
 	color: var(--control-border);
 	font-size: 8px;
 	font-variant-numeric: tabular-nums;
@@ -114,18 +114,30 @@ button {
 
 .axis-tick {
 	position: relative;
-	display: grid;
-	place-items: center;
+	flex: 0 0 0;
 }
 
 .x-axis {
 	grid-area: x-axis;
+	justify-content: space-between;
 	padding-bottom: 5px;
+}
+
+.x-axis .axis-tick {
+	height: 100%;
+}
+
+.x-axis .axis-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transform: translateX(-50%);
 }
 
 .x-axis .axis-tick::after {
 	position: absolute;
 	bottom: -5px;
+	left: 0;
 	width: 1px;
 	height: 3px;
 	background: var(--control-border);
@@ -134,11 +146,25 @@ button {
 
 .y-axis {
 	grid-area: y-axis;
+	flex-direction: column;
+	justify-content: space-between;
 	padding-right: 5px;
+}
+
+.y-axis .axis-tick {
+	width: 100%;
+}
+
+.y-axis .axis-label {
+	position: absolute;
+	top: 0;
+	right: 1px;
+	transform: translateY(-50%);
 }
 
 .y-axis .axis-tick::after {
 	position: absolute;
+	top: 0;
 	right: -5px;
 	width: 3px;
 	height: 1px;

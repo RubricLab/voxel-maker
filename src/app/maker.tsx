@@ -347,25 +347,17 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 			<div className="creator">
 				<div className="editor">
 					<div className="canvas">
-						<div
-							className="axis x-axis"
-							style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
-							aria-hidden="true"
-						>
-							{Array.from({ length: gridSize }, (_, index) => (
+						<div className="axis x-axis" aria-hidden="true">
+							{Array.from({ length: gridSize + 1 }, (_, index) => (
 								<span className="axis-tick" key={index}>
-									{index}
+									<span className="axis-label">{index}</span>
 								</span>
 							))}
 						</div>
-						<div
-							className="axis y-axis"
-							style={{ gridTemplateRows: `repeat(${gridSize}, 1fr)` }}
-							aria-hidden="true"
-						>
-							{Array.from({ length: gridSize }, (_, index) => (
+						<div className="axis y-axis" aria-hidden="true">
+							{Array.from({ length: gridSize + 1 }, (_, index) => (
 								<span className="axis-tick" key={index}>
-									{index}
+									<span className="axis-label">{index}</span>
 								</span>
 							))}
 						</div>
