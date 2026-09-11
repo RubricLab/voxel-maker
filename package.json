@@ -27,6 +27,7 @@
 	"owner": "@rubriclab",
 	"private": true,
 	"scripts": {
+		"auth": "bun src/auth.ts",
 		"bleed": "bunx npm-check-updates -u",
 		"build": "next build",
 		"dev": "next dev",
