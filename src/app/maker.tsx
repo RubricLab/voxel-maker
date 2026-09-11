@@ -49,6 +49,7 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 	const [transparentBackground, setTransparentBackground] = useState(true)
 	const [board, setBoard] = useState<BoardCreation[]>([])
 	const [boardLoading, setBoardLoading] = useState(true)
+	const [boardError, setBoardError] = useState(false)
 	const [addingToBoard, setAddingToBoard] = useState(false)
 	const [addedGrid, setAddedGrid] = useState<string | null>(null)
 	const [poppingCreation, setPoppingCreation] = useState({ id: 0, nonce: 0 })
@@ -71,9 +72,12 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 				const response = await fetch('/api/board', { cache: 'no-store' })
 				if (!response.ok) throw new Error('Failed to load board')
 				const payload = (await response.json()) as { creations: BoardCreation[] }
-				if (!cancelled) setBoard(payload.creations)
+				if (!cancelled) {
+					setBoard(payload.creations)
+				}
 			} catch (error) {
 				console.error({ error })
+				if (!cancelled) setBoardError(true)
 			} finally {
 				if (!cancelled) setBoardLoading(false)
 			}
@@ -297,6 +301,10 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 				headers: { 'Content-Type': 'application/json' },
 				method: 'POST'
 			})
+			if (response.status === 401) {
+				window.location.assign(`/login?grid=${serializedGrid}`)
+				return
+			}
 			const payload = (await response.json()) as {
 				created?: boolean
 				creation?: BoardCreation
@@ -514,7 +522,10 @@ export const GridImageCreator: FC<GridImageCreatorProps> = ({ initialGrid = RUBR
 					<span>Made here</span>
 				</div>
 				{boardLoading ? <p className="board-status">Loading…</p> : null}
-				{!boardLoading && board.length === 0 ? (
+				{!boardLoading && boardError ? (
+					<p className="board-status">Could not load the board. Refresh to try again.</p>
+				) : null}
+				{!boardLoading && !boardError && board.length === 0 ? (
 					<p className="board-status">Nothing here yet. Add the first one.</p>
 				) : null}
 				<div className="board-grid">

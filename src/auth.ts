@@ -18,7 +18,15 @@ type AuthOptions = {
 
 const digest = (value: string): Buffer => createHash('sha256').update(value).digest()
 
-const loginPage = (message = '', blocked = false): string => `<!doctype html>
+export const hasBoardSession = (request: Request, password = process.env.APP_PASSWORD): boolean => {
+	if (!password) return false
+	const token = digest(`session\0${password}`).toString('hex')
+	return (request.headers.get('cookie') ?? '')
+		.split(';')
+		.some(part => part.trim() === `${COOKIE_NAME}=${token}`)
+}
+
+const loginPage = (message = '', blocked = false, grid = ''): string => `<!doctype html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
@@ -43,11 +51,12 @@ const loginPage = (message = '', blocked = false): string => `<!doctype html>
 	</style>
 </head>
 <body>
-	<form action="/login" method="post">
-		<h1>Maker</h1>
+	<form action="/login${grid ? `?grid=${grid}` : ''}" method="post">
+		<h1>Log in to add to board</h1>
 		<input type="password" name="password" aria-label="Password" placeholder="Password" autocomplete="current-password" autofocus required ${blocked ? 'disabled' : ''}>
 		<button type="submit" ${blocked ? 'disabled' : ''}>Continue</button>
 		<p role="alert">${message}</p>
+		<a href="/${grid ? `?grid=${grid}` : ''}">Back to editor</a>
 	</form>
 </body>
 </html>`
@@ -90,15 +99,6 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 		failures.set(ip, { count: 1, startedAt: now })
 	}
 
-	const hasSession = (request: Request): boolean => {
-		const cookie = request.headers.get('cookie') ?? ''
-		const value = cookie
-			.split(';')
-			.map(part => part.trim().split('='))
-			.find(([name]) => name === COOKIE_NAME)?.[1]
-		return value === sessionToken
-	}
-
 	const externalUrl = (request: Request, path: string): URL => {
 		const incomingUrl = new URL(request.url)
 		const host = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() || incomingUrl.host
@@ -134,13 +134,17 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 
 	return async (request: Request): Promise<Response> => {
 		const url = new URL(request.url)
+		const candidateGrid = url.searchParams.get('grid') ?? ''
+		const grid = /^[01]{1,900}$/.test(candidateGrid) ? candidateGrid : ''
+		const returnPath = grid ? `/?grid=${grid}` : '/'
 		if (url.pathname === '/health') {
 			return new Response('ok', { headers: { 'Cache-Control': 'no-store' } })
 		}
 
 		if (url.pathname === '/login' && request.method === 'GET') {
-			if (hasSession(request)) return Response.redirect(externalUrl(request, '/'), 303)
-			return htmlResponse(loginPage())
+			if (hasBoardSession(request, password))
+				return Response.redirect(externalUrl(request, returnPath), 303)
+			return htmlResponse(loginPage('', false, grid))
 		}
 
 		if (url.pathname === '/login' && request.method === 'POST') {
@@ -156,8 +160,8 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 				return new Response(null, {
 					headers: {
 						'Cache-Control': 'no-store',
-						Location: '/',
-						'Set-Cookie': `${COOKIE_NAME}=${sessionToken}; Path=/; Max-Age=${SESSION_MAX_AGE}; HttpOnly; Secure; SameSite=Strict`
+						Location: returnPath,
+						'Set-Cookie': `${COOKIE_NAME}=${sessionToken}; Path=/; Max-Age=${SESSION_MAX_AGE}; HttpOnly; SameSite=Strict${externalUrl(request, '/').protocol === 'https:' ? '; Secure' : ''}`
 					},
 					status: 303
 				})
@@ -166,16 +170,15 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 			const failure = failures.get(ip)
 			if (failure && now - failure.startedAt < FAILURE_WINDOW_MS && failure.count >= FAILURE_LIMIT) {
 				const retryAfter = Math.ceil((FAILURE_WINDOW_MS - (now - failure.startedAt)) / 1000)
-				return htmlResponse(loginPage('Try again later.', true), 429, {
+				return htmlResponse(loginPage('Try again later.', true, grid), 429, {
 					'Retry-After': String(retryAfter)
 				})
 			}
 
 			recordFailure(ip, now)
-			return htmlResponse(loginPage('Wrong password.'), 401)
+			return htmlResponse(loginPage('Wrong password.', false, grid), 401)
 		}
 
-		if (!hasSession(request)) return Response.redirect(externalUrl(request, '/login'), 303)
 		return proxy(request)
 	}
 }

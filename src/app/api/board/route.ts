@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { hasBoardSession } from '~/auth'
 import { addCreation, listCreations } from '~/lib/board'
 
 export const dynamic = 'force-dynamic'
@@ -31,6 +32,12 @@ const isRateLimited = (request: Request): boolean => {
 	return false
 }
 
+const unauthorized = () =>
+	NextResponse.json(
+		{ error: 'Log in to add to the board.' },
+		{ headers: { 'Cache-Control': 'no-store' }, status: 401 }
+	)
+
 export function GET() {
 	return NextResponse.json(
 		{ creations: listCreations() },
@@ -39,6 +46,7 @@ export function GET() {
 }
 
 export async function POST(request: Request) {
+	if (!hasBoardSession(request)) return unauthorized()
 	if (isRateLimited(request)) {
 		return NextResponse.json({ error: 'Try again in a minute.' }, { status: 429 })
 	}
