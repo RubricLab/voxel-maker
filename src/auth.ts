@@ -74,7 +74,16 @@ const htmlResponse = (body: string, status = 200, headers?: HeadersInit): Respon
 		status
 	})
 
-export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => {
+const externalUrl = (request: Request, path: string): URL => {
+	const incomingUrl = new URL(request.url)
+	const host = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() || incomingUrl.host
+	const protocol =
+		request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
+		incomingUrl.protocol.slice(0, -1)
+	return new URL(path, `${protocol}://${host}`)
+}
+
+export const createLoginHandler = ({ password }: { password: string }) => {
 	const expectedPassword = digest(password)
 	const sessionToken = digest(`session\0${password}`).toString('hex')
 	const failures = new Map<string, Failure>()
@@ -99,47 +108,11 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 		failures.set(ip, { count: 1, startedAt: now })
 	}
 
-	const externalUrl = (request: Request, path: string): URL => {
-		const incomingUrl = new URL(request.url)
-		const host = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() || incomingUrl.host
-		const protocol =
-			request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
-			incomingUrl.protocol.slice(0, -1)
-		return new URL(path, `${protocol}://${host}`)
-	}
-
-	const proxy = async (request: Request): Promise<Response> => {
-		const incomingUrl = new URL(request.url)
-		const upstreamUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, upstreamOrigin)
-		const headers = new Headers(request.headers)
-		headers.delete('host')
-		headers.set('accept-encoding', 'identity')
-		headers.set('x-forwarded-host', externalUrl(request, '/').host)
-		headers.set('x-forwarded-proto', externalUrl(request, '/').protocol.slice(0, -1))
-
-		const upstreamResponse = await fetch(upstreamUrl, {
-			body: request.method === 'GET' || request.method === 'HEAD' ? null : request.body,
-			headers,
-			method: request.method,
-			redirect: 'manual'
-		})
-		const responseHeaders = new Headers(upstreamResponse.headers)
-		responseHeaders.set('X-Content-Type-Options', 'nosniff')
-		return new Response(upstreamResponse.body, {
-			headers: responseHeaders,
-			status: upstreamResponse.status,
-			statusText: upstreamResponse.statusText
-		})
-	}
-
 	return async (request: Request): Promise<Response> => {
 		const url = new URL(request.url)
 		const candidateGrid = url.searchParams.get('grid') ?? ''
 		const grid = /^[01]{1,900}$/.test(candidateGrid) ? candidateGrid : ''
 		const returnPath = grid ? `/?grid=${grid}` : '/'
-		if (url.pathname === '/health') {
-			return new Response('ok', { headers: { 'Cache-Control': 'no-store' } })
-		}
 
 		if (url.pathname === '/login' && request.method === 'GET') {
 			if (hasBoardSession(request, password))
@@ -179,6 +152,43 @@ export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => 
 			return htmlResponse(loginPage('Wrong password.', false, grid), 401)
 		}
 
+		return new Response('Not found', { status: 404 })
+	}
+}
+
+export const createAuthHandler = ({ password, upstreamOrigin }: AuthOptions) => {
+	const login = createLoginHandler({ password })
+
+	const proxy = async (request: Request): Promise<Response> => {
+		const incomingUrl = new URL(request.url)
+		const upstreamUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, upstreamOrigin)
+		const headers = new Headers(request.headers)
+		headers.delete('host')
+		headers.set('accept-encoding', 'identity')
+		headers.set('x-forwarded-host', externalUrl(request, '/').host)
+		headers.set('x-forwarded-proto', externalUrl(request, '/').protocol.slice(0, -1))
+
+		const upstreamResponse = await fetch(upstreamUrl, {
+			body: request.method === 'GET' || request.method === 'HEAD' ? null : request.body,
+			headers,
+			method: request.method,
+			redirect: 'manual'
+		})
+		const responseHeaders = new Headers(upstreamResponse.headers)
+		responseHeaders.set('X-Content-Type-Options', 'nosniff')
+		return new Response(upstreamResponse.body, {
+			headers: responseHeaders,
+			status: upstreamResponse.status,
+			statusText: upstreamResponse.statusText
+		})
+	}
+
+	return async (request: Request): Promise<Response> => {
+		const url = new URL(request.url)
+		if (url.pathname === '/health') {
+			return new Response('ok', { headers: { 'Cache-Control': 'no-store' } })
+		}
+		if (url.pathname === '/login') return login(request)
 		return proxy(request)
 	}
 }

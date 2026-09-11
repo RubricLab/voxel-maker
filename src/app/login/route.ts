@@ -1,12 +1,10 @@
-import { createAuthHandler } from '~/auth'
+import { createLoginHandler } from '~/auth'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const password = process.env.APP_PASSWORD
-const handler = password
-	? createAuthHandler({ password, upstreamOrigin: 'http://127.0.0.1:8840' })
-	: null
+const handler = password ? createLoginHandler({ password }) : null
 
 const login = (request: Request): Response | Promise<Response> => {
 	if (!handler) {

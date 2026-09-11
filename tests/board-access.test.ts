@@ -1,5 +1,5 @@
 import { afterAll, expect, test } from 'bun:test'
-import { createAuthHandler, hasBoardSession } from '../src/auth'
+import { createAuthHandler, createLoginHandler, hasBoardSession } from '../src/auth'
 
 const previousPassword = process.env.APP_PASSWORD
 const previousDatabase = process.env.DATABASE_PATH
@@ -14,10 +14,7 @@ afterAll(() => {
 	else process.env.DATABASE_PATH = previousDatabase
 })
 
-const handler = createAuthHandler({
-	password: 'test-board-password',
-	upstreamOrigin: 'http://127.0.0.1:8840'
-})
+const handler = createLoginHandler({ password: 'test-board-password' })
 const login = (password: string, origin = 'https://maker.test') =>
 	handler(
 		new Request(`${origin}/login?grid=100000000`, {
@@ -71,6 +68,8 @@ test('proxy allows anonymous access to the editor and exports', async () => {
 	})
 	try {
 		const publicHandler = createAuthHandler({ password: 'test', upstreamOrigin: upstream.url.origin })
+		const loginResponse = await publicHandler(new Request('http://localhost/login'))
+		expect(await loginResponse.text()).toContain('Log in to add to board')
 		for (const path of ['/', '/api/og', '/_next/static/app.js']) {
 			const response = await publicHandler(new Request(`http://localhost${path}`))
 			expect(response.status).toBe(200)
